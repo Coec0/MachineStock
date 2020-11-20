@@ -1,10 +1,10 @@
-import request_omx
+from request_omx import RequestOMX
 
 stock_id = "SSE365"
 
-x = request_omx.fetch(stock_id, "2020-11-18")
+fetcher = RequestOMX()
+
+x = fetcher.fetch(stock_id, "2020-11-18")
 
 outF = open("test.csv", "w")
 outF.write(x.text)
-
-#print(x.text)
