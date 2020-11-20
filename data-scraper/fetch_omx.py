@@ -1,10 +1,23 @@
 from request_omx import RequestOMX
+import json
+import os
+import time
 
-stock_id = "SSE365"
-
+from_date = "2020-11-18"
 fetcher = RequestOMX()
 
-x = fetcher.fetch(stock_id, "2020-11-18")
+with open("stocks.json", "r") as file:
+    stocks_dict = json.loads(file.read())
 
-outF = open("test.csv", "w")
-outF.write(x.text)
+for key in stocks_dict:
+    dir_path = "data/"+key+"/"
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+
+    section = stocks_dict[key]
+    for stock in section:
+        data = fetcher.fetch(stock["id"], from_date)
+        if(data.status_code == 200):
+            file = open(dir_path+"/"+stock["name"]+"_"+from_date+".csv", "w")
+            file.write(data.text)
+            time.sleep(0.5)

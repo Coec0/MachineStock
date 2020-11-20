@@ -1,0 +1,13 @@
+{
+  "carindustry" : [
+    {"name" : "Volvo-A", "id" : "SSE365"},
+    {"name" : "Mekonomen", "id":"SSE4986"}
+  ],
+  "bank-sector" : [
+    {"name" : "Swedbank-A", "id" : "SSE120"},
+    {"name" : "SEB_A", "id" : "SSE281"}],
+  "data"   : [
+    {"name" : "Ericsson-A", "id" : "SSE100"},
+    {"name" : "Telia_Company", "id" : "SSE5095"}
+  ]
+}
