@@ -2,7 +2,15 @@
   "carindustry" : [
     {"name" : "Volvo-A", "id" : "SSE365"},
     {"name" : "Volvo-B", "id" : "SSE366"},
-    {"name" : "Mekonomen", "id":"SSE4986"}
+    {"name" : "Mekonomen", "id" : "SSE4986"}
+  ],
+  "energy(SX60PI)" : [
+    {"name" : "Africa_Oil", "id" : "SSE77948"},
+    {"name" : "EnQuest_PLC", "id" : "SSE75073"},
+    {"name" : "Eolus_Vind-B", "id" : "SSE66174"},
+    {"name" : "International_Petroleum_Corp", "id" : "SSE136295"},
+    {"name" : "Lundin_Energy", "id" : "SSE22335"},
+    {"name" : "Tethys_Oil", "id" : "SSE24588"} 
   ],
   "swe-bank-sector" : [
     {"name" : "Swedbank-A", "id" : "SSE120"},
@@ -13,7 +21,7 @@
   "nordic-bank-sector" : [
     {"name" : "Danske_Bank", "id" : "CSE1586"},
     {"name" : "Aktia_Bank", "id" : "HEX69423"},
-    {"name" : "Sydbank", "id" : "CSE3366"},
+    {"name" : "Sydbank", "id" : "CSE3366"}
   ],
   "data"   : [
     {"name" : "Ericsson-A", "id" : "SSE100"},
