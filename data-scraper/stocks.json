@@ -1,11 +1,20 @@
 {
   "carindustry" : [
     {"name" : "Volvo-A", "id" : "SSE365"},
+    {"name" : "Volvo-B", "id" : "SSE366"},
     {"name" : "Mekonomen", "id":"SSE4986"}
   ],
-  "bank-sector" : [
+  "swe-bank-sector" : [
     {"name" : "Swedbank-A", "id" : "SSE120"},
-    {"name" : "SEB_A", "id" : "SSE281"}],
+    {"name" : "SEB-A", "id" : "SSE281"},
+    {"name" : "Nordea", "id" : "SSE160271"},
+    {"name" : "Handelsbanken-A", "id" : "SSE340"}
+  ],
+  "nordic-bank-sector" : [
+    {"name" : "Danske_Bank", "id" : "CSE1586"},
+    {"name" : "Aktia_Bank", "id" : "HEX69423"},
+    {"name" : "Sydbank", "id" : "CSE3366"},
+  ],
   "data"   : [
     {"name" : "Ericsson-A", "id" : "SSE100"},
     {"name" : "Telia_Company", "id" : "SSE5095"}
