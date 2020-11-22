@@ -19,7 +19,7 @@ class RequestOMX:
         self.print_response_message(response, stock_id)
         timelimit = 60 - response.elapsed_time
 
-        while timelimit > 0 and response.status_code != 200:
+        while timelimit > 0 and (response.status_code != 200 or len(response.content)//1000 == 0):
             self.change_cookie_id()
             response = self.create_and_post_request(stock_id, f_date, t_date)
             self.print_response_message(response, stock_id)
