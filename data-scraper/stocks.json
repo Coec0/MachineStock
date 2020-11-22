@@ -12,6 +12,22 @@
     {"name" : "Lundin_Energy", "id" : "SSE22335"},
     {"name" : "Tethys_Oil", "id" : "SSE24588"} 
   ],
+  "telecommunications(SX15PI)" : [
+    {"name" : "A3_Allmänna_IT-_och_Telekom", "id" : "SSE66668"},
+    {"name" : "DORO", "id" : "SSE896"},
+    {"name" : "Ericsson-A", "id" : "SSE100"},
+    {"name" : "Ericsson-B", "id" : "SSE101"},
+    {"name" : "HMS_Networks", "id" : "SSE43302"},
+    {"name" : "Hexatronic_Group", "id" : "SSE82816"},
+    {"name" : "Nordic_Entertainment_Group_A", "id" : "SSE171334"},
+    {"name" : "Net_Insight_B", "id" : "SSE3871"},
+    {"name" : "Nokia_Oyj", "id" : "SSE39854"},
+    {"name" : "Stockwik_Förvaltning", "id" : "SSE1007"},
+    {"name" : "Tele2-A", "id" : "SSE1026"},
+    {"name" : "Tele2-B", "id" : "SSE1027"},
+    {"name" : "Telia_Company", "id" : "SSE5095"},
+    {"name" : "Millicom_Int._Cellular_SDB", "id" : "SSE24507"}
+  ],
   "swe-bank-sector" : [
     {"name" : "Swedbank-A", "id" : "SSE120"},
     {"name" : "SEB-A", "id" : "SSE281"},
@@ -22,9 +38,5 @@
     {"name" : "Danske_Bank", "id" : "CSE1586"},
     {"name" : "Aktia_Bank", "id" : "HEX69423"},
     {"name" : "Sydbank", "id" : "CSE3366"}
-  ],
-  "data"   : [
-    {"name" : "Ericsson-A", "id" : "SSE100"},
-    {"name" : "Telia_Company", "id" : "SSE5095"}
   ]
 }
