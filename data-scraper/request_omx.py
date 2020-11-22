@@ -16,17 +16,17 @@ class RequestOMX:
 
     def fetch(self, stock_id, f_date, t_date = ''):
         response = self.create_and_post_request(stock_id, f_date, t_date)
-        self.print_response_message(response)
+        self.print_response_message(response, stock_id)
         timelimit = 60 - response.elapsed_time
 
         while timelimit > 0 and response.status_code != 200:
             self.change_cookie_id()
             response = self.create_and_post_request(stock_id, f_date, t_date)
-            self.print_response_message(response)
+            self.print_response_message(response, stock_id)
             timelimit = 60 - response.elapsed_time
 
         if(timelimit <= 0):
-            print("Timeout")
+            print("Timeout ("+stock_id+")")
 
         return response
 
@@ -78,7 +78,7 @@ class RequestOMX:
         res.elapsed_time = roundtime
         return res
 
-    def print_response_message(self, res):
-        msg = "Response: [{0}], Size: {1}KB, Time: {2}ms"
-        msg = msg.format(res.status_code, len(res.content)//1000, round(res.elapsed_time*1000))
+    def print_response_message(self, res, stock_id):
+        msg = "Response: [{0}], Size: {1}KB, Time: {2}ms ({3})"
+        msg = msg.format(res.status_code, len(res.content)//1000, round(res.elapsed_time*1000), stock_id)
         print(msg)
