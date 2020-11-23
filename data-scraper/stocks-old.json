@@ -1,0 +1,74 @@
+{
+  "carindustry" : [
+    {"name" : "Volvo-A", "id" : "SSE365"},
+    {"name" : "Volvo-B", "id" : "SSE366"},
+    {"name" : "Mekonomen", "id" : "SSE4986"}
+  ],
+  "energy(SX60PI)" : [
+    {"name" : "Africa_Oil", "id" : "SSE77948"},
+    {"name" : "EnQuest_PLC", "id" : "SSE75073"},
+    {"name" : "Eolus_Vind-B", "id" : "SSE66174"},
+    {"name" : "International_Petroleum_Corp", "id" : "SSE136295"},
+    {"name" : "Lundin_Energy", "id" : "SSE22335"},
+    {"name" : "Tethys_Oil", "id" : "SSE24588"} 
+  ],
+  "telecommunications(SX15PI)" : [
+    {"name" : "A3_Allmänna_IT-_och_Telekom", "id" : "SSE66668"},
+    {"name" : "DORO", "id" : "SSE896"},
+    {"name" : "Ericsson-A", "id" : "SSE100"},
+    {"name" : "Ericsson-B", "id" : "SSE101"},
+    {"name" : "HMS_Networks", "id" : "SSE43302"},
+    {"name" : "Hexatronic_Group", "id" : "SSE82816"},
+    {"name" : "Nordic_Entertainment_Group_A", "id" : "SSE171334"},
+    {"name" : "Net_Insight_B", "id" : "SSE3871"},
+    {"name" : "Nokia_Oyj", "id" : "SSE39854"},
+    {"name" : "Stockwik_Förvaltning", "id" : "SSE1007"},
+    {"name" : "Tele2-A", "id" : "SSE1026"},
+    {"name" : "Tele2-B", "id" : "SSE1027"},
+    {"name" : "Telia_Company", "id" : "SSE5095"},
+    {"name" : "Millicom_Int._Cellular_SDB", "id" : "SSE24507"}
+  ],
+  "financials(SX30PI)" : [
+    {"name" : "Arion_Banki_SDB", "id" : "SSE156393"},
+    {"name" : "Avanza_Bank_Holding", "id" : "SSE988"},
+    {"name" : "Bure_Equity", "id" : "SSE800"},
+    {"name" : "Catella-A", "id" : "SSE62547"},
+    {"name" : "Catella-B", "id" : "SSE62559"},
+    {"name" : "Collector", "id" : "SSE110079"},
+    {"name" : "EQT", "id" : "SSE180864"},
+    {"name" : "Hoist_Finance", "id" : "SSE107904"},
+    {"name" : "Industrivärden-A", "id" : "SSE142"},
+    {"name" : "Industrivärden-B", "id" : "SSE143"},
+    {"name" : "Intrum", "id" : "SSE18962"},
+    {"name" : "Investor-A", "id" : "SSE160"},
+    {"name" : "Investor-B", "id" : "SSE161"},
+    {"name" : "Kinnevik-A", "id" : "SSE998"},
+    {"name" : "Kinnevik-B", "id" : "SSE999"},
+    {"name" : "Latour-B", "id" : "SSE914"},
+    {"name" : "Nordea_Bank_Abp", "id" : "SSE160271"},
+    {"name" : "Öresund", "id" : "SSE863"},
+    {"name" : "Qliro", "id" : "SSE204109"},
+    {"name" : "Ratos-A", "id" : "SSE1044"},
+    {"name" : "Ratos-B", "id" : "SSE1045"},
+    {"name" : "Resurs_Holding", "id" : "SSE121360"},
+    {"name" : "SEB-A", "id" : "SSE281"},
+    {"name" : "SEB-C", "id" : "SSE282"},
+    {"name" : "Sv._Handelsbanken-A", "id" : "SSE340"},
+    {"name" : "Sv._Handelsbanken-B", "id" : "SSE341"},
+    {"name" : "Swedbank-A", "id" : "SSE120"},
+    {"name" : "TF_Bank", "id" : "SSE123340"},
+    {"name" : "Traction_B", "id" : "SSE4963"},
+    {"name" : "VNV_Global", "id" : "SSE198737"}
+  ],
+  "swe-bank-sector" : [
+    {"name" : "Swedbank-A", "id" : "SSE120"},
+    {"name" : "SEB-A", "id" : "SSE281"},
+    {"name" : "Nordea", "id" : "SSE160271"},
+    {"name" : "Handelsbanken-A", "id" : "SSE340"}
+  ],
+  "nordic-bank-sector" : [
+    {"name" : "Danske_Bank", "id" : "CSE1586"},
+    {"name" : "Aktia_Bank", "id" : "HEX69423"},
+    {"name" : "Sydbank", "id" : "CSE3366"}
+  ]
+}
