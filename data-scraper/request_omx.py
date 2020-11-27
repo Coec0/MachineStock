@@ -78,6 +78,34 @@ class RequestOMX:
         res.elapsed_time = roundtime
         return res
 
+    def fetch_limitorders(self, stock_id):
+
+        #Working curl script
+        #curl "http://www.nasdaqomxnordic.com/webproxy/DataFeedProxy.aspx?SubSystem=Prices&Action=GetInstrument&Exchange=NMF&inst.an=nm"%"2Cch"%"2Cchp"%"2Clsp"%"2Cltp"%"2Cto"%"2Cbp"%"2Cap"%"2Ctv"%"2Chp"%"2Clp"%"2Cop"%"2Ct"%"2Cfnm&pd.a=3"%"2C6&inst.e=1&Exception=false&datasource=prod&cache=skip&app="%"2Faktier"%"2Fmicrosite-RTIOrderDepth&json=1&DefaultDecimals=false&Instrument=SSE365" -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0" -H "Accept: text/#javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01" -H "Accept-Language: en-US,en;q=0.5" -H "X-Requested-With: XMLHttpRequest" -H "Connection: keep-alive" -H "Referer: http://www.nasdaqomxnordic.com/aktier/microsite?Instrument=SSE365"
+
+        query = '?SubSystem=Prices&Action=GetInstrument&Exchange=NMF&inst.an=nm"%"2Cch"%"2Cchp"%"2Clsp"%"2Cltp"%"2Cto"%"2Cbp"%"2Cap"%"2Ctv"%"2Chp"%"2Clp"%"2Cop"%"2Ct"%"2Cfnm&pd.a=3"%"2C6&inst.e=1&Exception=false&datasource=prod&cache=skip&app="%"2Faktier"%"2Fmicrosite-RTIOrderDepth&json=1&DefaultDecimals=false'
+        instrument = '&Instrument='+stock_id
+        url = 'http://www.nasdaqomxnordic.com/webproxy/DataFeedProxy.aspx'+query+instrument
+
+        headers = {
+         "User-Agent" : "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0",
+         "Accept" : "text/javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01",
+         "Accept-Language" : 'en-US,en;q=0.5',
+         "X-Requested-With": 'XMLHttpRequest',
+         "Connection" : "keep-alive",
+         "Referer" : "http://www.nasdaqomxnordic.com/shares/microsite?Instrument="+stock_id,
+        }
+
+        start = time.time()
+        print(headers)
+        res = requests.get(url, headers = headers)
+        print("hej")
+        print(res)
+        roundtime = time.time() - start
+        res.elapsed_time = roundtime
+        return res
+
+
     def print_response_message(self, res, stock_id):
         msg = "Response: [{0}], Size: {1}KB, Time: {2}ms ({3})"
         msg = msg.format(res.status_code, len(res.content)//1000, round(res.elapsed_time*1000), stock_id)
