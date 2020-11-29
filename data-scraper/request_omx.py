@@ -14,14 +14,14 @@ class RequestOMX:
         rand_char = random.choice(string.ascii_uppercase + string.digits)
         self.cookie_id = self.cookie_id[:index-1] + rand_char + self.cookie_id[index:]
 
-    def fetch(self, stock_id, f_date, t_date = ''):
-        response = self.create_and_post_request(stock_id, f_date, t_date)
+    def fetch_marketorders(self, stock_id, f_date, t_date = ''):
+        response = self.request_marketorders(stock_id, f_date, t_date)
         self.print_response_message(response, stock_id)
         timelimit = 600 - response.elapsed_time
 
         while timelimit > 0 and (response.status_code != 200 or len(response.content)//1000 == 0):
             self.change_cookie_id()
-            response = self.create_and_post_request(stock_id, f_date, t_date)
+            response = self.request_marketorders(stock_id, f_date, t_date)
             self.print_response_message(response, stock_id)
             timelimit = timelimit - response.elapsed_time
 
@@ -30,7 +30,7 @@ class RequestOMX:
 
         return response
 
-    def create_and_post_request(self, stock_id, f_date, t_date = ''):
+    def request_marketorders(self, stock_id, f_date, t_date = ''):
         from_date = '<param name="FromDate" value="'+f_date+'"/>\n'
         to_date = '' if t_date == '' else '<param name="ToDate" value="'+t_date+'"/>'
         instrument = '<param name="Instrument" value="'+ stock_id +'"/>'
@@ -78,33 +78,31 @@ class RequestOMX:
         res.elapsed_time = roundtime
         return res
 
-    def fetch_limitorders(self, stock_id):
-
-        #Working curl script
-        #curl "http://www.nasdaqomxnordic.com/webproxy/DataFeedProxy.aspx?SubSystem=Prices&Action=GetInstrument&Exchange=NMF&inst.an=nm"%"2Cch"%"2Cchp"%"2Clsp"%"2Cltp"%"2Cto"%"2Cbp"%"2Cap"%"2Ctv"%"2Chp"%"2Clp"%"2Cop"%"2Ct"%"2Cfnm&pd.a=3"%"2C6&inst.e=1&Exception=false&datasource=prod&cache=skip&app="%"2Faktier"%"2Fmicrosite-RTIOrderDepth&json=1&DefaultDecimals=false&Instrument=SSE365" -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0" -H "Accept: text/#javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01" -H "Accept-Language: en-US,en;q=0.5" -H "X-Requested-With: XMLHttpRequest" -H "Connection: keep-alive" -H "Referer: http://www.nasdaqomxnordic.com/aktier/microsite?Instrument=SSE365"
-
-        query = '?SubSystem=Prices&Action=GetInstrument&Exchange=NMF&inst.an=nm"%"2Cch"%"2Cchp"%"2Clsp"%"2Cltp"%"2Cto"%"2Cbp"%"2Cap"%"2Ctv"%"2Chp"%"2Clp"%"2Cop"%"2Ct"%"2Cfnm&pd.a=3"%"2C6&inst.e=1&Exception=false&datasource=prod&cache=skip&app="%"2Faktier"%"2Fmicrosite-RTIOrderDepth&json=1&DefaultDecimals=false'
+    def request_limitorders(self, stock_id):
+        query = '?SubSystem=Prices&Action=GetInstrument&Exchange=NMF&inst.an=nm"%"2Cch"%"2Cchp"%"2Clsp"%"2Cltp"%"2Cto"%"2Cbp"%"2Cap"%"2Ctv"%"2Chp"%"2Clp"%"2Cop"%"2Ct"%"2Cfnm&pd.a=3&inst.e=1&Exception=false&datasource=prod&cache=skip&app="%"2Faktier"%"2Fmicrosite-RTIOrderDepth&json=1&DefaultDecimals=false'
         instrument = '&Instrument='+stock_id
         url = 'http://www.nasdaqomxnordic.com/webproxy/DataFeedProxy.aspx'+query+instrument
 
         headers = {
-         "User-Agent" : "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0",
-         "Accept" : "text/javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01",
+         "User-Agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0",
+         "Accept" : "text/json, */*; q=0.01",
          "Accept-Language" : 'en-US,en;q=0.5',
          "X-Requested-With": 'XMLHttpRequest',
          "Connection" : "keep-alive",
-         "Referer" : "http://www.nasdaqomxnordic.com/shares/microsite?Instrument="+stock_id,
+         "Referer" : "http://www.nasdaqomxnordic.com/aktier/microsite?Instrument="+stock_id,
         }
 
         start = time.time()
-        print(headers)
         res = requests.get(url, headers = headers)
-        print("hej")
-        print(res)
         roundtime = time.time() - start
         res.elapsed_time = roundtime
         return res
 
+    def fetch_limitorders(self, stock_id):
+        response = self.request_limitorders(stock_id)
+        if response.status_code != 200:
+            self.print_response_message(response, stock_id)
+        return response
 
     def print_response_message(self, res, stock_id):
         msg = "Response: [{0}], Size: {1}KB, Time: {2}ms ({3})"

@@ -1,3 +1,5 @@
 test.csv
 data-scraper/__pycache__
 data/
+limitorders/
+marketorders/
