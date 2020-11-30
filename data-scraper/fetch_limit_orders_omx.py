@@ -69,7 +69,7 @@ csv_header = "sep=;\ntimestamp;bid1;bid2;bid3;bid4;bid5;ask1;ask2;ask3;ask4;ask5
 
 today = date.today()
 now = time.localtime()
-print("Time started" +datetime.now().time()) # To make sure that the correct timezone
+print("Time started" + str(datetime.now().time())) # To make sure that the correct timezone
 
 date = today.strftime("%Y-%m-%d")
 current_time = time.strftime("%H:%M:%S", now)
