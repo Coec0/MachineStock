@@ -17,7 +17,7 @@ def wait_until(end_datetime):
 
 def is_time_between(begin_time, end_time, check_time=None):
     # If check time is not given, default to current UTC time
-    check_time = check_time or datetime.utcnow().time()
+    check_time = check_time or datetime.now().time()
     if begin_time < end_time:
         return check_time >= begin_time and check_time <= end_time
     else: # crosses midnight
@@ -69,6 +69,7 @@ csv_header = "sep=;\ntimestamp;bid1;bid2;bid3;bid4;bid5;ask1;ask2;ask3;ask4;ask5
 
 today = date.today()
 now = time.localtime()
+print("Time started" +datetime.now().time()) # To make sure that the correct timezone
 
 date = today.strftime("%Y-%m-%d")
 current_time = time.strftime("%H:%M:%S", now)
