@@ -36,7 +36,7 @@ with open("stocks.json", "r") as file:
     stocks_dict = json.loads(file.read())
 
 for key in stocks_dict:
-    dir_path = "limitorders/"+date+"/"+current_time+"/"+key+"/"
+    dir_path = "limitorders/"+date+"/"+key+"/"
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
@@ -44,9 +44,15 @@ for key in stocks_dict:
     for stock in section:
         data = fetcher.fetch_limitorders(stock["id"])
         if(data.status_code == 200):
-            file = open(dir_path+"/"+stock["name"]+".json", "w")
+            write_header = False
+            file_path = dir_path+stock["name"]+".csv"
+            if not os.path.exists(file_path):
+                write_header = True
+            file = open(file_path, "a")
+            if write_header:
+                file.write(csv_header + '\n')
             try:
-                file.write(parse_order(json.loads(data.text)))
+                file.write(parse_order(json.loads(data.text)) + '\n')
             except:
                  pass #There were no limit orders or something was malformed, ignore
             #time.sleep(0.5)
