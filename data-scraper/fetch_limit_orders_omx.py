@@ -5,7 +5,33 @@ import json
 import os
 import time
 import itertools
-from datetime import date
+from datetime import date, datetime, time as time2, timedelta
+
+def wait_until(end_datetime):
+    while True:
+        diff = (end_datetime - datetime.now()).total_seconds()
+        if diff < 0: return       # In case end_datetime was in past to begin with
+        time.sleep(diff/2)
+        if diff <= 0.1: return
+
+
+def is_time_between(begin_time, end_time, check_time=None):
+    # If check time is not given, default to current UTC time
+    check_time = check_time or datetime.utcnow().time()
+    if begin_time < end_time:
+        return check_time >= begin_time and check_time <= end_time
+    else: # crosses midnight
+        return check_time >= begin_time or check_time <= end_time
+        
+def sleep_if_market_is_closed():
+    if is_time_between(time2(17,31), time2(8,59)): #Stock market is closed
+        if datetime.now().weekday() == 4: #It's friday
+            tomorrow = datetime.now() + timedelta(days=3)
+        else:
+            tomorrow = datetime.now() + timedelta(days=1)
+        print("Stock closed, time to sleep")
+        wait_until(datetime(tomorrow.year, tomorrow.month, tomorrow.day, 9, 0, 0, 0))
+        print("Stock open, starting to work")
 
 def parse_order(raw_data):
 	timestamp = raw_data['@ts']
@@ -86,4 +112,6 @@ while True:
                 prev = parsed
             except:
                  pass #There were no limit orders or something was malformed, ignore
+                 
+        sleep_if_market_is_closed()
         time.sleep(1)
