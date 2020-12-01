@@ -10,7 +10,7 @@ with open("stocks.json", "r") as file:
     stocks_dict = json.loads(file.read())
 
 for key in stocks_dict:
-    dir_path = "marketorders/"+from_date+"/"+key+"/"
+    dir_path = "data/marketorders/"+from_date+"/"+key+"/"
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
