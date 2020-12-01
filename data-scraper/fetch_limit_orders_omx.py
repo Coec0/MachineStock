@@ -7,11 +7,13 @@ import time
 import itertools
 import threading
 import pytz
+from pytz import timezone, all_timezones
 from threading import Thread
 from datetime import date, datetime, time as time2, timedelta
 
 def wait_until(end_datetime):
     while True:
+        end_datetime = end_datetime.astimezone(timezone('Europe/Stockholm'))
         diff = (end_datetime - datetime.now(tz=pytz.timezone('Europe/Stockholm'))).total_seconds()
         if diff < 0: return       # In case end_datetime was in past to begin with
         time.sleep(diff/2)
