@@ -17,7 +17,6 @@ ENV LC_ALL en_US.UTF-8
 RUN pip3 install pytz
 RUN pip3 install requests
 
-#RUN chmod +x fetch-limitorders.sh
-#RUN chmod +x inf-loop.sh
+RUN chmod +x start-fetchers.sh
 
-CMD python3 fetch_limit_orders_omx.py
+CMD sh start-fetchers.sh
