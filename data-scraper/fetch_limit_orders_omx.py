@@ -67,7 +67,7 @@ def stock_thread(selected_stock, selected_section, lock):
         data = fetcher.fetch_limitorders(selected_stock["id"])
         if(data.status_code == 200):
             write_header = False
-            file_path = dir_path+stock["name"]+".csv"
+            file_path = dir_path+selected_stock["name"]+".csv"
             if not os.path.exists(file_path):
                 write_header = True
             file = open(file_path, "a", encoding="utf-8")
