@@ -85,8 +85,10 @@ def stock_thread(selected_stock, selected_section, lock):
             sleep_if_market_is_closed(selected_stock["id"])
             time.sleep(1)
 
+stocks_json_file = str(sys.argv[1])
+
 print("Time started " + str(datetime.now(tz=pytz.timezone('Europe/Stockholm')).time())) # To make sure that the correct timezone
-with open("stocks.json", "r", encoding="utf-8") as file:
+with open(stocks_json_file, "r", encoding="utf-8") as file:
     stocks_dict = json.loads(file.read())
 
 csv_header = "sep=;\ntimestamp;bid1;bid2;bid3;bid4;bid5;ask1;ask2;ask3;ask4;ask5;bid_volume1;bid_volume2;bid_volume3;bid_volume4;bid_volume5;ask_volume1;ask_volume2;ask_volume3;ask_volume4;ask_volume5"
