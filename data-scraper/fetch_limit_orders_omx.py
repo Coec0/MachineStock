@@ -56,34 +56,37 @@ def parse_order(raw_data):
 def stock_thread(selected_stock, selected_section, lock):
     prev = ""
     while True:
-        date_ = date.today().strftime("%Y-%m-%d")
-        dir_path = "data/limitorders/"+date_+"/"+selected_section+"/"
+        try:
+            date_ = date.today().strftime("%Y-%m-%d")
+            dir_path = "data/limitorders/"+date_+"/"+selected_section+"/"
 
-        lock.acquire()
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
-        lock.release()
+            lock.acquire()
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
+            lock.release()
 
-        data = fetcher.fetch_limitorders(selected_stock["id"])
-        if(data.status_code == 200):
-            write_header = False
-            file_path = dir_path+selected_stock["name"]+".csv"
-            if not os.path.exists(file_path):
-                write_header = True
-            file = open(file_path, "a", encoding="utf-8")
-            if write_header:
-                file.write(csv_header + '\n')
+            data = fetcher.fetch_limitorders(selected_stock["id"])
+            if(data.status_code == 200):
+                write_header = False
+                file_path = dir_path+selected_stock["name"]+".csv"
+                if not os.path.exists(file_path):
+                    write_header = True
+                file = open(file_path, "a", encoding="utf-8")
+                if write_header:
+                    file.write(csv_header + '\n')
 
-            try:
-                if re.sub(r'^.*?;', ';', str(prev)) != re.sub(r'^.*?;', ';', str(parse_order(json.loads(data.text)))):
-                    parsed = parse_order(json.loads(data.text))
-                    file.write(parse_order(json.loads(data.text)) + '\n')
-                    prev = parsed
-            except:
-                 pass #There were no limit orders or something was malformed, ignore
+                try:
+                    if re.sub(r'^.*?;', ';', str(prev)) != re.sub(r'^.*?;', ';', str(parse_order(json.loads(data.text)))):
+                        parsed = parse_order(json.loads(data.text))
+                        file.write(parse_order(json.loads(data.text)) + '\n')
+                        prev = parsed
+                except:
+                     pass #There were no limit orders or something was malformed, ignore
 
-            sleep_if_market_is_closed(selected_stock["id"])
-            time.sleep(1)
+                sleep_if_market_is_closed(selected_stock["id"])
+                time.sleep(1)
+        except:
+            pass #Some kind of error happened, probably a problem with the web request. Just continue
 
 stocks_json_file = str(sys.argv[1])
 

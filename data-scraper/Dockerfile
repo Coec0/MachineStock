@@ -19,4 +19,4 @@ RUN pip3 install requests
 
 RUN chmod +x start-fetchers.sh
 
-CMD sh start-fetchers.sh
+CMD python3 fetch_limit_orders_omx.py "stocks.json"
