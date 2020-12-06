@@ -29,7 +29,7 @@ def is_time_between(begin_time, end_time, check_time=None):
         return check_time >= begin_time or check_time <= end_time
 
 def sleep_if_market_is_closed(id):
-    if is_time_between(time2(17,31), time2(8,59)): #Stock market is closed
+    if is_time_between(time2(17,31), time2(7,59)): #Stock market is closed, bug makes it of by one hour, therefore 7,59 is used instead of 8,59
         if datetime.now(tz=pytz.timezone('Europe/Stockholm')).weekday() == 4: #It's friday
             tomorrow = datetime.now(tz=pytz.timezone('Europe/Stockholm')) + timedelta(days=3)
         else:
