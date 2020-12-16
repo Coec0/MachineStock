@@ -35,7 +35,7 @@ def sleep_if_market_is_closed(id):
         else:
             tomorrow = datetime.now(tz=pytz.timezone('Europe/Stockholm')) + timedelta(days=1)
         print("Stock closed, time to sleep, id:"+str(id))
-        wait_until(datetime(tomorrow.year, tomorrow.month, tomorrow.day, 9, 0, 0, 0))
+        wait_until(datetime(tomorrow.year, tomorrow.month, tomorrow.day, 8, 0, 0, 0)) #Stock market is closed, bug makes it of by one hour, therefore 8 is used instead of 9
         print("Stock open, starting to work, id:"+str(id))
 
 def parse_order(raw_data):
