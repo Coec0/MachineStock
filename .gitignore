@@ -3,3 +3,4 @@ data-scraper/__pycache__
 data/
 limitorders/
 marketorders/
+*.sql
