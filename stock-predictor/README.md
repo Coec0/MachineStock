@@ -3,7 +3,10 @@
 #### Docker guide:
 docker build -t stock-predictor:latest .
 
-docker run stock-predictor
+docker run --network="host" --name="stock-predictor"  
+--rm stock-predictor:latest
+
+(For use with localhosted database)
 
 
 #### Information:
