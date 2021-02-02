@@ -4,3 +4,5 @@ data/
 limitorders/
 marketorders/
 *.sql
+cmake-build-debug/
+.idea/
