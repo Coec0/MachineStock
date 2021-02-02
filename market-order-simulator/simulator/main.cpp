@@ -12,17 +12,20 @@
 #include <rapidjson/document.h>
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
+#include <chrono>
+#include <thread>
 
+using namespace std::chrono;
 using namespace std;
 using namespace rapidjson;
 
-string sql_row_to_json(const char* stock, const char* sector, int publication_time, const char* mmt_flags,
-                             const char* transaction_id_code, double price, int volume);
+string sql_row_to_json(const char *stock, const char *sector, int publication_time, const char *mmt_flags,
+                       const char *transaction_id_code, double price, int volume);
 
-int main()
-{
-    int epoch_start = 1606867200; //Wednesday, December 2, 2020 0:00:00
-    int epoch_end = 1606953600;
+int main() {
+    const int epoch_start = 1606989600; //Thursday, December 3, 2020 10:00:00
+    const int epoch_end = 1607007600;
+    int simulated_time = epoch_start;
     try {
         sql::mysql::MySQL_Driver *driver;
         sql::Connection *con;
@@ -36,11 +39,25 @@ int main()
         stmt = con->createStatement();
         std::stringstream ss;
         ss << "SELECT * FROM market_orders "
-             "WHERE publication_time BETWEEN " << epoch_start << " AND " << epoch_end <<
-             " ORDER BY publication_time ASC LIMIT 0,10";
-        res = stmt->executeQuery(ss.str()); // replace with your statement
+              "WHERE publication_time BETWEEN " << epoch_start << " AND " << epoch_end <<
+           " ORDER BY publication_time ASC LIMIT 0,5000";
+        res = stmt->executeQuery(ss.str());
         cout << "Size " << res->rowsCount() << endl;
+        auto start = high_resolution_clock::now(); //Makes sure its initialised
         while (res->next()) {
+            while (simulated_time < res->getInt("publication_time")) { //Wait until correct timestamp
+                auto stop = high_resolution_clock::now(); //Stop timer
+                int duration = duration_cast<microseconds>(stop - start).count(); //Calculate delta from start of timer
+                if (duration > 1000000)
+                    cout << simulated_time << ": Cannot' keep up! Delayed by "
+                         << duration - 1000000
+                         << " microseconds"
+                         << endl;
+                std::this_thread::sleep_for(std::chrono::microseconds(
+                        max(0, 1000000 - duration))); // Remove delta from 1 second to get correct seconds
+                simulated_time++;
+                start = high_resolution_clock::now(); //Start timer to see how long execution time takes
+            }
             const string json = sql_row_to_json(
                     res->getString("stock").c_str(),
                     res->getString("sector").c_str(),
@@ -49,7 +66,7 @@ int main()
                     res->getString("transaction_id_code").c_str(),
                     res->getDouble("price"),
                     res->getInt("volume")
-                    );
+            );
             cout << json << endl;
         }
         delete res;
@@ -69,8 +86,8 @@ int main()
     return EXIT_SUCCESS;
 }
 
-string sql_row_to_json(const char* stock, const char* sector, int publication_time, const char* mmt_flags,
-                             const char* transaction_id_code, double price, int volume){
+string sql_row_to_json(const char *stock, const char *sector, int publication_time, const char *mmt_flags,
+                       const char *transaction_id_code, double price, int volume) {
     StringBuffer s;
     Writer<StringBuffer> writer(s);
     writer.StartObject();               // Between StartObject()/EndObject(),
@@ -90,7 +107,7 @@ string sql_row_to_json(const char* stock, const char* sector, int publication_ti
     writer.Int(volume);
     writer.EndObject();
 
-    const char* ret_val = s.GetString();
-    string ret_string (ret_val);
+    const char *ret_val = s.GetString();
+    string ret_string(ret_val);
     return ret_string;
 }
