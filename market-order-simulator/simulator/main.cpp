@@ -9,10 +9,15 @@
 #include <mysql_driver.h>
 #include <sstream>
 #include <string>
-
+#include <rapidjson/document.h>
+#include <rapidjson/writer.h>
+#include <rapidjson/stringbuffer.h>
 
 using namespace std;
+using namespace rapidjson;
 
+string sql_row_to_json(const char* stock, const char* sector, int publication_time, const char* mmt_flags,
+                             const char* transaction_id_code, double price, int volume);
 
 int main()
 {
@@ -24,10 +29,8 @@ int main()
         sql::Statement *stmt;
         sql::ResultSet *res;
 
-        /* Create a connection */
         driver = sql::mysql::get_driver_instance();
         con = driver->connect("tcp://127.0.0.1:3306", "root", "mosigtedson");
-        /* Connect to the MySQL test database */
         con->setSchema("orders");
 
         stmt = con->createStatement();
@@ -36,14 +39,18 @@ int main()
              "WHERE publication_time BETWEEN " << epoch_start << " AND " << epoch_end <<
              " ORDER BY publication_time ASC LIMIT 0,10";
         res = stmt->executeQuery(ss.str()); // replace with your statement
-        cout << "Size " << res->rowsCount();
+        cout << "Size " << res->rowsCount() << endl;
         while (res->next()) {
-            cout << "\t... MySQL replies: ";
-            /* Access column data by alias or column name */
-            cout << res->getString("publication_time") << endl;
-            cout << "\t... MySQL says it again: ";
-            /* Access column fata by numeric offset, 1 is the first column */
-            cout << res->getString(1) << endl;
+            const string json = sql_row_to_json(
+                    res->getString("stock").c_str(),
+                    res->getString("sector").c_str(),
+                    res->getInt("publication_time"),
+                    res->getString("mmt_flags").c_str(),
+                    res->getString("transaction_id_code").c_str(),
+                    res->getDouble("price"),
+                    res->getInt("volume")
+                    );
+            cout << json << endl;
         }
         delete res;
         delete stmt;
@@ -60,4 +67,30 @@ int main()
     cout << endl;
 
     return EXIT_SUCCESS;
+}
+
+string sql_row_to_json(const char* stock, const char* sector, int publication_time, const char* mmt_flags,
+                             const char* transaction_id_code, double price, int volume){
+    StringBuffer s;
+    Writer<StringBuffer> writer(s);
+    writer.StartObject();               // Between StartObject()/EndObject(),
+    writer.Key("stock");                // output a key,
+    writer.String(stock);             // follow by a value.
+    writer.Key("sector");
+    writer.String(sector);
+    writer.Key("publication_time");
+    writer.Int(publication_time);
+    writer.Key("mmt_flags");
+    writer.String(mmt_flags);
+    writer.Key("transaction_id_code");
+    writer.String(transaction_id_code);
+    writer.Key("price");
+    writer.Double(price);
+    writer.Key("volume");
+    writer.Int(volume);
+    writer.EndObject();
+
+    const char* ret_val = s.GetString();
+    string ret_string (ret_val);
+    return ret_string;
 }
