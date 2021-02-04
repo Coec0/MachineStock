@@ -14,6 +14,7 @@
 #include <rapidjson/stringbuffer.h>
 #include <chrono>
 #include <thread>
+#include "network_connection.h"
 
 using namespace std::chrono;
 using namespace std;
@@ -26,35 +27,44 @@ int main() {
     const int epoch_start = 1606989600; //Thursday, December 3, 2020 10:00:00
     const int epoch_end = 1607007600;
     int simulated_time = epoch_start;
+    int port = 2002;
+
+    network_connection connection(port);
+
     try {
         sql::mysql::MySQL_Driver *driver;
         sql::Connection *con;
         sql::Statement *stmt;
         sql::ResultSet *res;
 
+        cout << "Connecting to sql server " << endl;
         driver = sql::mysql::get_driver_instance();
         con = driver->connect("tcp://127.0.0.1:3306", "root", "mosigtedson");
         con->setSchema("orders");
 
+        cout << "Connected! " << endl << "Querying data. This can take some time..." << endl;
         stmt = con->createStatement();
         std::stringstream ss;
         ss << "SELECT * FROM market_orders "
               "WHERE publication_time BETWEEN " << epoch_start << " AND " << epoch_end <<
            " ORDER BY publication_time ASC LIMIT 0,5000";
         res = stmt->executeQuery(ss.str());
-        cout << "Size " << res->rowsCount() << endl;
+        cout << "Data fetched! Rows matched: " << res->rowsCount() << endl;
+        cout << "Waiting for client..." << endl;
+        connection.listen_socket();
+        cout << "Client connected! Starting transmission" << endl;
         auto start = high_resolution_clock::now(); //Makes sure its initialised
         while (res->next()) {
             while (simulated_time < res->getInt("publication_time")) { //Wait until correct timestamp
                 auto stop = high_resolution_clock::now(); //Stop timer
-                int duration = duration_cast<microseconds>(stop - start).count(); //Calculate delta from start of timer
+                long duration = duration_cast<microseconds>(stop - start).count(); //Calculate delta from start of timer
                 if (duration > 1000000)
                     cout << simulated_time << ": Cannot' keep up! Delayed by "
                          << duration - 1000000
                          << " microseconds"
                          << endl;
                 std::this_thread::sleep_for(std::chrono::microseconds(
-                        max(0, 1000000 - duration))); // Remove delta from 1 second to get correct seconds
+                        max(0l, 1000000 - duration))); // Remove delta from 1 second to get correct seconds
                 simulated_time++;
                 start = high_resolution_clock::now(); //Start timer to see how long execution time takes
             }
@@ -67,7 +77,7 @@ int main() {
                     res->getDouble("price"),
                     res->getInt("volume")
             );
-            cout << json << endl;
+            connection.write_to_socket(json.c_str());
         }
         delete res;
         delete stmt;
