@@ -1,6 +1,5 @@
 #include <cstdlib>
 #include <iostream>
-#include <mysql_connection.h>
 
 #include <cppconn/driver.h>
 #include <cppconn/exception.h>
@@ -23,12 +22,49 @@ using namespace rapidjson;
 string sql_row_to_json(const char *stock, const char *sector, int publication_time, const char *mmt_flags,
                        const char *transaction_id_code, double price, int volume);
 
-int main() {
-    const int epoch_start = 1606989600; //Thursday, December 3, 2020 10:00:00
-    const int epoch_end = 1607007600;
-    int simulated_time = epoch_start;
-    int port = 2002;
+void parse_arguments(int argc, char *argv[]);
 
+int port = 2000;
+int mysql_port = 3306;
+string mysql_ip;
+int epoch_start = 1606989600;//Thursday, December 3, 2020 10:00:00
+int epoch_end = 1607007600;
+string stocks;
+string sectors;
+string username;
+string password;
+
+void error_parse(const char *msg)
+{
+    perror(msg);
+    exit(EXIT_FAILURE);
+}
+
+string comma_to_sql(const string& values);
+
+/**
+ * Arguments:
+ *
+ * Required:
+ *
+ * --mysql-user <mysql username>
+ * --mysql-pass <mysql password>
+ *
+ * Optional:
+ *
+ * --port <listen port (default 2000)>
+ * --mysql-ip <ip to mysql server (default 127.0.0.1)>
+ * --mysql-port <port to mysql server (default 3306)>
+ * --stocks <stocks separated with ",". Leave empty for all stocks. This overrides sectors if both are set. Example:
+ *      "Handelsbanken,Avanza">
+ * --sectors <sectors separated with ",". Leave empty for all sectors. Example: "financials,healthcare">
+ * --epoch-start <the starting simulated time measured in seconds since 1970 (default 1606989600)>
+ * --epoch-end <the ending in simulated time measured in seconds since 1970 (default 1607007600)>
+ */
+int main(int argc, char *argv[]) {
+    mysql_ip = "127.0.0.1";
+    parse_arguments(argc, argv);
+    int simulated_time = epoch_start;
     network_connection connection(port);
 
     try {
@@ -39,15 +75,25 @@ int main() {
 
         cout << "Connecting to sql server " << endl;
         driver = sql::mysql::get_driver_instance();
-        con = driver->connect("tcp://127.0.0.1:3306", "root", "mosigtedson");
+        stringstream connection_ss;
+        connection_ss << "tcp://" + mysql_ip + ":" << mysql_port;
+
+        con = driver->connect(connection_ss.str(), username, password); //mosigtedson root
         con->setSchema("orders");
 
-        cout << "Connected! " << endl << "Querying data. This can take some time..." << endl;
+        cout << "Connected! " << endl;
         stmt = con->createStatement();
         std::stringstream ss;
         ss << "SELECT * FROM market_orders "
-              "WHERE publication_time BETWEEN " << epoch_start << " AND " << epoch_end <<
-           " ORDER BY publication_time ASC LIMIT 0,5000";
+              "WHERE (publication_time BETWEEN " << epoch_start << " AND " << epoch_end <<") ";
+        if(!stocks.empty())
+            ss << "AND stock in (" << comma_to_sql(stocks) << ") ";
+        if(!sectors.empty() && stocks.empty())
+            ss << "AND sector in (" << comma_to_sql(sectors) << ") ";
+
+        ss << "ORDER BY publication_time ASC";
+
+        cout << "Querying data using \""+ss.str()+"\". This can take some time..." << endl;
         res = stmt->executeQuery(ss.str());
         cout << "Data fetched! Rows matched: " << res->rowsCount() << endl;
         cout << "Waiting for client..." << endl;
@@ -120,4 +166,48 @@ string sql_row_to_json(const char *stock, const char *sector, int publication_ti
     const char *ret_val = s.GetString();
     string ret_string(ret_val);
     return ret_string;
+}
+
+void parse_arguments(int argc, char *argv[]){
+    int real_args = argc - 1; //Remove program name
+    if(real_args % 2 != 0)
+        error_parse("Uneven number of arguments. Exiting...");
+    for(int i=1; i<argc; i=i+2){
+        char * arg = argv[i];
+        if (strcmp(arg, "--mysql-user") == 0)
+            username = argv[i+1];
+        else if (strcmp(arg, "--mysql-pass") == 0)
+            password = argv[i+1];
+        else if (strcmp(arg, "--port") == 0)
+            port = stoi(argv[i+1]);
+        else if (strcmp(arg, "--mysql-ip") == 0)
+            mysql_ip = argv[i+1];
+        else if (strcmp(arg, "--mysql-port") == 0)
+            mysql_port = stoi(argv[i+1]);
+        else if (strcmp(arg, "--stocks") == 0)
+            stocks = argv[i+1];
+        else if (strcmp(arg, "--sectors") == 0)
+            sectors = argv[i+1];
+        else if (strcmp(arg, "--epoch-start") == 0)
+            epoch_start = stoi(argv[i+1]);
+        else if (strcmp(arg, "--epoch-end") == 0)
+            epoch_end = stoi(argv[i+1]);
+        else
+            error_parse("Unknown argument supplied. Exiting...");
+    }
+    if(username.empty() || password.empty()){
+        error_parse(R"(Missing "--mysql-user" or "--mysql-pass". Exiting...)");
+    }
+}
+
+string comma_to_sql(const string& values){
+    std::stringstream ss;
+    istringstream ss_split(values);
+    string token;
+    while(getline(ss_split, token, ',')) {
+        ss << "\"" << token << "\",";
+    }
+    string combined = ss.str();
+    combined.pop_back();
+    return combined;
 }
