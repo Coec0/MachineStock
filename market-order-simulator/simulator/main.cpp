@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
         if (!sectors.empty() && stocks.empty())
             ss << "AND sector in (" << comma_to_sql(sectors) << ") ";
 
-        ss << "ORDER BY publication_time ASC";
+        ss << "ORDER BY publication_time ASC , transaction_id_code ASC ";
 
         cout << "Querying data using \"" + ss.str() + "\".\nThis can take some time..." << endl;
         res = stmt->executeQuery(ss.str());
