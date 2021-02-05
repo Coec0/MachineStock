@@ -29,6 +29,7 @@ int mysql_port = 3306;
 string mysql_ip;
 int epoch_start = 1606989600;//Thursday, December 3, 2020 10:00:00
 int epoch_end = 1607007600;
+double time_factor = 1;
 string stocks;
 string sectors;
 string username;
@@ -60,6 +61,7 @@ string comma_to_sql(const string& values);
  * --sectors <sectors separated with ",". Leave empty for all sectors. Example: "financials,healthcare">
  * --epoch-start <the starting simulated time measured in seconds since 1970 (default 1606989600)>
  * --epoch-end <the ending in simulated time measured in seconds since 1970 (default 1607007600)>
+ * --time-factor <sleep time is modified with this factor. 0.25 would result in 4 times speedup>
  */
 int main(int argc, char *argv[]) {
     mysql_ip = "127.0.0.1";
@@ -93,7 +95,7 @@ int main(int argc, char *argv[]) {
 
         ss << "ORDER BY publication_time ASC";
 
-        cout << "Querying data using \""+ss.str()+"\". This can take some time..." << endl;
+        cout << "Querying data using \""+ss.str()+"\".\n This can take some time..." << endl;
         res = stmt->executeQuery(ss.str());
         cout << "Data fetched! Rows matched: " << res->rowsCount() << endl;
         cout << "Waiting for client..." << endl;
@@ -104,13 +106,14 @@ int main(int argc, char *argv[]) {
             while (simulated_time < res->getInt("publication_time")) { //Wait until correct timestamp
                 auto stop = high_resolution_clock::now(); //Stop timer
                 long duration = duration_cast<microseconds>(stop - start).count(); //Calculate delta from start of timer
-                if (duration > 1000000)
+                int sleep_time = (int)(1000000*time_factor);
+                if (duration > sleep_time)
                     cout << simulated_time << ": Cannot' keep up! Delayed by "
-                         << duration - 1000000
+                         << duration - sleep_time
                          << " microseconds"
                          << endl;
                 std::this_thread::sleep_for(std::chrono::microseconds(
-                        max(0l, 1000000 - duration))); // Remove delta from 1 second to get correct seconds
+                        max(0l, sleep_time - duration))); // Remove delta from 1 second to get correct seconds
                 simulated_time++;
                 start = high_resolution_clock::now(); //Start timer to see how long execution time takes
             }
@@ -192,6 +195,8 @@ void parse_arguments(int argc, char *argv[]){
             epoch_start = stoi(argv[i+1]);
         else if (strcmp(arg, "--epoch-end") == 0)
             epoch_end = stoi(argv[i+1]);
+        else if(strcmp(arg, "--time-factor") == 0)
+            time_factor = stoi(argv[i+1]);
         else
             error_parse("Unknown argument supplied. Exiting...");
     }
