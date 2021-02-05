@@ -5,7 +5,7 @@ print(x)
 
 import mysql.connector
 
-cnx = mysql.connector.connect(host="host.docker.internal",user="admin", password="kvxxkv11-sql", database="orders")     
+cnx = mysql.connector.connect(host="host.docker.internal",user="admin", password="betersbeters", database="orders")     
 
 c = cnx.cursor()
 
@@ -15,5 +15,4 @@ for x in c:
 	print(x)
 
 c.close()
-cnx.close()   
-
+cnx.close()
