@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
 
         ss << "ORDER BY publication_time ASC";
 
-        cout << "Querying data using \""+ss.str()+"\".\n This can take some time..." << endl;
+        cout << "Querying data using \""+ss.str()+"\".\nThis can take some time..." << endl;
         res = stmt->executeQuery(ss.str());
         cout << "Data fetched! Rows matched: " << res->rowsCount() << endl;
         cout << "Waiting for client..." << endl;
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
             while (simulated_time < res->getInt("publication_time")) { //Wait until correct timestamp
                 auto stop = high_resolution_clock::now(); //Stop timer
                 long duration = duration_cast<microseconds>(stop - start).count(); //Calculate delta from start of timer
-                int sleep_time = (int)(1000000*time_factor);
+                int sleep_time = 1000000*time_factor;
                 if (duration > sleep_time)
                     cout << simulated_time << ": Cannot' keep up! Delayed by "
                          << duration - sleep_time
@@ -164,6 +164,10 @@ string sql_row_to_json(const char *stock, const char *sector, int publication_ti
     writer.Double(price);
     writer.Key("volume");
     writer.Int(volume);
+    writer.Key("timestamp_ms");
+    auto now = high_resolution_clock::now();
+    long timestamp = duration_cast<milliseconds>(now.time_since_epoch()).count();
+    writer.Int64(timestamp);
     writer.EndObject();
 
     const char *ret_val = s.GetString();
@@ -196,7 +200,7 @@ void parse_arguments(int argc, char *argv[]){
         else if (strcmp(arg, "--epoch-end") == 0)
             epoch_end = stoi(argv[i+1]);
         else if(strcmp(arg, "--time-factor") == 0)
-            time_factor = stoi(argv[i+1]);
+            time_factor = stod(argv[i+1]);
         else
             error_parse("Unknown argument supplied. Exiting...");
     }
