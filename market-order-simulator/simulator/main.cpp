@@ -35,13 +35,12 @@ string sectors;
 string username;
 string password;
 
-void error_parse(const char *msg)
-{
+void error_parse(const char *msg) {
     perror(msg);
     exit(EXIT_FAILURE);
 }
 
-string comma_to_sql(const string& values);
+string comma_to_sql(const string &values);
 
 /**
  * Arguments:
@@ -87,15 +86,15 @@ int main(int argc, char *argv[]) {
         stmt = con->createStatement();
         std::stringstream ss;
         ss << "SELECT * FROM market_orders "
-              "WHERE (publication_time BETWEEN " << epoch_start << " AND " << epoch_end <<") ";
-        if(!stocks.empty())
+              "WHERE (publication_time BETWEEN " << epoch_start << " AND " << epoch_end << ") ";
+        if (!stocks.empty())
             ss << "AND stock in (" << comma_to_sql(stocks) << ") ";
-        if(!sectors.empty() && stocks.empty())
+        if (!sectors.empty() && stocks.empty())
             ss << "AND sector in (" << comma_to_sql(sectors) << ") ";
 
         ss << "ORDER BY publication_time ASC";
 
-        cout << "Querying data using \""+ss.str()+"\".\nThis can take some time..." << endl;
+        cout << "Querying data using \"" + ss.str() + "\".\nThis can take some time..." << endl;
         res = stmt->executeQuery(ss.str());
         cout << "Data fetched! Rows matched: " << res->rowsCount() << endl;
         cout << "Waiting for client..." << endl;
@@ -106,7 +105,7 @@ int main(int argc, char *argv[]) {
             while (simulated_time < res->getInt("publication_time")) { //Wait until correct timestamp
                 auto stop = high_resolution_clock::now(); //Stop timer
                 long duration = duration_cast<microseconds>(stop - start).count(); //Calculate delta from start of timer
-                int sleep_time = 1000000*time_factor;
+                int sleep_time = 1000000 * time_factor;
                 if (duration > sleep_time)
                     cout << simulated_time << ": Cannot' keep up! Delayed by "
                          << duration - sleep_time
@@ -175,45 +174,47 @@ string sql_row_to_json(const char *stock, const char *sector, int publication_ti
     return ret_string;
 }
 
-void parse_arguments(int argc, char *argv[]){
+void parse_arguments(int argc, char *argv[]) {
     int real_args = argc - 1; //Remove program name
-    if(real_args % 2 != 0)
+    if (real_args % 2 != 0)
         error_parse("Uneven number of arguments. Exiting...");
-    for(int i=1; i<argc; i=i+2){
-        char * arg = argv[i];
+    for (int i = 1; i < argc; i = i + 2) {
+        char *arg = argv[i];
         if (strcmp(arg, "--mysql-user") == 0)
-            username = argv[i+1];
+            username = argv[i + 1];
         else if (strcmp(arg, "--mysql-pass") == 0)
-            password = argv[i+1];
+            password = argv[i + 1];
         else if (strcmp(arg, "--port") == 0)
-            port = stoi(argv[i+1]);
+            port = stoi(argv[i + 1]);
         else if (strcmp(arg, "--mysql-ip") == 0)
-            mysql_ip = argv[i+1];
+            mysql_ip = argv[i + 1];
         else if (strcmp(arg, "--mysql-port") == 0)
-            mysql_port = stoi(argv[i+1]);
-        else if (strcmp(arg, "--stocks") == 0)
-            stocks = argv[i+1];
-        else if (strcmp(arg, "--sectors") == 0)
-            sectors = argv[i+1];
-        else if (strcmp(arg, "--epoch-start") == 0)
-            epoch_start = stoi(argv[i+1]);
+            mysql_port = stoi(argv[i + 1]);
+        else if (strcmp(arg, "--stocks") == 0) {
+            if (strcmp(argv[i + 1], "\"\"") != 0 && strcmp(argv[i + 1], "''") != 0)
+                stocks = argv[i + 1];
+        } else if (strcmp(arg, "--sectors") == 0) {
+            if (strcmp(argv[i + 1], "\"\"") != 0 && strcmp(argv[i + 1], "''") != 0)
+                sectors = argv[i + 1];
+        } else if (strcmp(arg, "--epoch-start") == 0)
+            epoch_start = stoi(argv[i + 1]);
         else if (strcmp(arg, "--epoch-end") == 0)
-            epoch_end = stoi(argv[i+1]);
-        else if(strcmp(arg, "--time-factor") == 0)
-            time_factor = stod(argv[i+1]);
+            epoch_end = stoi(argv[i + 1]);
+        else if (strcmp(arg, "--time-factor") == 0)
+            time_factor = stod(argv[i + 1]);
         else
             error_parse("Unknown argument supplied. Exiting...");
     }
-    if(username.empty() || password.empty()){
+    if (username.empty() || password.empty()) {
         error_parse(R"(Missing "--mysql-user" or "--mysql-pass". Exiting...)");
     }
 }
 
-string comma_to_sql(const string& values){
+string comma_to_sql(const string &values) {
     std::stringstream ss;
     istringstream ss_split(values);
     string token;
-    while(getline(ss_split, token, ',')) {
+    while (getline(ss_split, token, ',')) {
         ss << "\"" << token << "\",";
     }
     string combined = ss.str();
