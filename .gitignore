@@ -6,3 +6,4 @@ marketorders/
 *.sql
 cmake-build-debug/
 .idea/
+market-order-simulator/*.list
