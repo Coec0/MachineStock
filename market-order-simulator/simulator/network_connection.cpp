@@ -43,6 +43,8 @@ void network_connection::listen_socket() {
 }
 
 void network_connection::write_to_socket(const char *message) {
-    int n = write(new_socket_fd, message, strlen(message));
-    if (n < 0) error("ERROR writing to socket");
+    uint32_t len = htonl(strlen(message));
+    int n = write(new_socket_fd, &len, sizeof(len));
+    int o = write(new_socket_fd, message, strlen(message));
+    if (n < 0 || o < 0) error("ERROR writing to socket");
 }
