@@ -74,6 +74,8 @@ int main(int argc, char *argv[]) {
         sql::Statement *stmt;
         sql::ResultSet *res;
 
+        connection.listen_socket();
+
         cout << "Connecting to sql server " << endl;
         driver = sql::mysql::get_driver_instance();
         stringstream connection_ss;
@@ -97,9 +99,9 @@ int main(int argc, char *argv[]) {
         cout << "Querying data using \"" + ss.str() + "\".\nThis can take some time..." << endl;
         res = stmt->executeQuery(ss.str());
         cout << "Data fetched! Rows matched: " << res->rowsCount() << endl;
-        cout << "Waiting for client..." << endl;
-        connection.listen_socket();
-        cout << "Client connected! Starting transmission" << endl;
+        cout << "Waiting 10 seconds for client..." << endl;
+        std::this_thread::sleep_for(std::chrono::seconds(10));
+        cout << "Starting transmission" << endl;
         auto start = high_resolution_clock::now(); //Makes sure its initialised
         while (res->next()) {
             while (simulated_time < res->getInt("publication_time")) { //Wait until correct timestamp

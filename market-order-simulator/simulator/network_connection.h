@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <forward_list>
 
 using namespace std;
 
@@ -19,7 +20,10 @@ public:
     void write_to_socket(const char *message);
 
 private:
-    int socket_fd, new_socket_fd;
+    [[noreturn]] void thread_socket();
+    int socket_fd;
+    forward_list<int> sockets;
+    thread t;
 };
 
 

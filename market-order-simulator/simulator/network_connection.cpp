@@ -2,6 +2,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
+#include <thread>
 #include "network_connection.h"
 
 using namespace std;
@@ -27,24 +29,42 @@ network_connection::network_connection(int port) {
         error("ERROR on binding");
 }
 network_connection::~network_connection() {
-    close(new_socket_fd);
-    close(socket_fd);
+    for (int & socket : sockets) {
+        close(socket);
+    }
+    close(socket_fd); //This should also kill the thread as it will throw an exception
 }
 
 void network_connection::listen_socket() {
-    struct sockaddr_in cli_addr;
-    listen(socket_fd,5);
-    socklen_t cli_len = sizeof(cli_addr);
-    new_socket_fd = accept(socket_fd,
-                           (struct sockaddr *) &cli_addr,
-                           &cli_len);
-    if (new_socket_fd < 0)
-        error("ERROR on accept");
+    t = std::thread(&network_connection::thread_socket, this);
 }
 
 void network_connection::write_to_socket(const char *message) {
-    uint32_t len = htonl(strlen(message));
-    int n = write(new_socket_fd, &len, sizeof(len));
-    int o = write(new_socket_fd, message, strlen(message));
-    if (n < 0 || o < 0) error("ERROR writing to socket");
+    for (int & socket : sockets) {
+        uint32_t len = htonl(strlen(message));
+        int n = write(socket, &len, sizeof(len));
+        int o = write(socket, message, strlen(message));
+        if (n < 0 || o < 0) error("ERROR writing to socket");
+    }
+}
+
+[[noreturn]] void network_connection::thread_socket() {
+    try {
+        while(true) {
+            struct sockaddr_in cli_addr;
+            listen(socket_fd, 5);
+            socklen_t cli_len = sizeof(cli_addr);
+            int new_socket_fd = accept(socket_fd,
+                                       (struct sockaddr *) &cli_addr,
+                                       &cli_len);
+            sockets.push_front(new_socket_fd);
+            std::cout << "Client accepted!"<< endl;
+            if (sockets.front() < 0)
+                error("ERROR on accept");
+        }
+    } catch (...) {
+        cout << "Error in listener. Killing thread..." << endl;
+        std::terminate(); //Kill thread on exception
+    }
+
 }
