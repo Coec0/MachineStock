@@ -2,6 +2,7 @@ import socket
 import struct
 import threading
 import queue
+import json
 
 class Adapter:
 
@@ -19,12 +20,6 @@ class Adapter:
                 msg_len = struct.unpack('>I', msg_len_raw)[0]
                 self.queue.put(s.recv(msg_len).decode())
 
-    #If a timeout is set and a timeout is reached, a "Empty" exception will be raised
+    #If a timeout is set and a timeout is reached, an "Empty" exception will be raised
     def get(self, time_out=None):
-        return self.queue.get(timeout=time_out)
-        
-connection = Adapter()
-while(True):
-    print(connection.get())
-
-
+        return json.loads(self.queue.get(timeout=time_out))
