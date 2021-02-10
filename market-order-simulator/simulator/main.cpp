@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
         cout << "Querying data using \"" + ss.str() + "\".\nThis can take some time..." << endl;
         res = stmt->executeQuery(ss.str());
         cout << "Data fetched! Rows matched: " << res->rowsCount() << endl;
-        cout << "Waiting 10 seconds for client..." << endl;
+        cout << "Waiting 10 seconds until simulation starts..." << endl;
         std::this_thread::sleep_for(std::chrono::seconds(10));
         cout << "Starting transmission" << endl;
         auto start = high_resolution_clock::now(); //Makes sure its initialised

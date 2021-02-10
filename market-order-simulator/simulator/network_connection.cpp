@@ -40,11 +40,19 @@ void network_connection::listen_socket() {
 }
 
 void network_connection::write_to_socket(const char *message) {
-    for (int & socket : sockets) {
-        uint32_t len = htonl(strlen(message));
-        int n = write(socket, &len, sizeof(len));
-        int o = write(socket, message, strlen(message));
-        if (n < 0 || o < 0) error("ERROR writing to socket");
+    auto before = sockets.before_begin();
+    uint32_t len = htonl(strlen(message));
+    for (auto socket_it = sockets.begin(); socket_it != sockets.end(); ) {
+        int n = write(*socket_it, &len, sizeof(len));
+        int o = write(*socket_it, message, strlen(message));
+        if (n < 0 || o < 0){
+            cout << strerror(errno) << ". Most likely a client disconnected. Continuing operation..." << endl;
+            close(*socket_it);
+            socket_it = sockets.erase_after(before);
+        } else {
+            before = socket_it;
+            ++socket_it;
+        }
     }
 }
 
