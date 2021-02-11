@@ -41,10 +41,10 @@ class DataHandler:
                 self.useVar = True
 
     def process_data(self, market_order):
-        stock = market_order.stock
-        price = market_order.price
+        stock = market_order["stock"]
+        price = market_order["price"]
         #Onnly save relevant data
-        self.market_orders[stock].extend(market_order)
+        self.market_orders[stock].append([price])
 
         if(self.useAvg or self.useVar):
             self.stock_count[stock] += 1
@@ -66,14 +66,14 @@ class DataHandler:
             square_sum = self.square_price_sum[stock]
             n = self.stock_count[stock]
             square_avg = square_sum / n
-            var = square_sum - square_avg / (n-1)
+            var = square_sum - square_avg / ((n-1)+0.00001)
             variances.append(var)
         return variances
 
     def build_input(self):
         stack = []
         for stock in self.stocks:
-            market_orders = np.array(self.market_orders[stock])
+            market_orders = np.array(self.market_orders[stock]).ravel()
             stack.append(market_orders)
 
         if(self.useAvg):
@@ -84,7 +84,7 @@ class DataHandler:
             variances = self.get_price_variance()
             stack.append(variances)
 
-        return np.vstack(stack)
+        return np.hstack(stack)
 
     def run(self):
         while(True):
@@ -93,6 +93,7 @@ class DataHandler:
             now = round(time.time())
             if(now - self.last_build_time >= self.build_delay):
                 input_vector = self.build_input()
+                print(input_vector)
                 self.input_vector_queue.put(input_vector)
                 self.last_build_time = round(time.time())
 

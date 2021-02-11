@@ -11,9 +11,11 @@ class StockPredictor:
         self.stocks = stocks
         self.input_buffer_size = input_buffer_size
 
-        host = "127.0.0.0"
+        host = "127.0.0.1"
         port = 2000
+        print("ADAPTER STARTING")
         self.input_adapter = Adapter(host, port, stocks)
+        print("ADAPTER ACCEPTED")
 
         parameters = {
             "build_delay" : 1,
@@ -22,6 +24,7 @@ class StockPredictor:
             "nbr_market_orders" : 20 }
 
         self.data_handler = DataHandler(self.input_adapter, parameters)
+        print("DATAHANDLER ACCEPTED")
         self.load_model()
 
     def load_model(self, suffix=""):
