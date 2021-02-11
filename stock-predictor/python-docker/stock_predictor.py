@@ -12,13 +12,11 @@ class StockPredictor:
         self.input_buffer_size = input_buffer_size
         self.input_adapter = Adapter()
 
-        parameters =
-        {
+        parameters = {
             "build_delay" : 1,
             "stocks" : ["Ericsson_A"],
             "math_features" : ["average", "variance"],
-            "nbr_market_orders" : 20 
-        }
+            "nbr_market_orders" : 20 }
 
         self.data_handler = DataHandler(self.input_adapter, parameters)
         self.load_model()
@@ -27,6 +25,7 @@ class StockPredictor:
     def load_model(self, suffix=""):
         suffix = "-"+suffix if suffix != "" else ""
         self.model = torch.load("models/"+self.stockname+suffix+".model")
+
 
     def send_prediction(pred):
         print("Prediction: "+str(pred))
