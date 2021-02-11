@@ -6,6 +6,7 @@ marketorders/
 *.sql
 stock-predictor/python-train/combined.csv
 stock-predictor/python-train/.ipynb_checkpoints/
+stock-predictor/python-docker/__pycache__/
 cmake-build-debug/
 .idea/
 market-order-simulator/*.list
