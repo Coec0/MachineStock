@@ -8,6 +8,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <forward_list>
+#include <tuple>
+#include <set>
+#include <rapidjson/writer.h>
 
 using namespace std;
 
@@ -17,12 +20,12 @@ public:
     virtual ~network_connection();
 
     void listen_socket();
-    void write_to_socket(const char *message);
+    void write_to_socket(const char * message);
 
 private:
     [[noreturn]] void thread_socket();
     int socket_fd;
-    forward_list<int> sockets;
+    forward_list<tuple<int, set<string>>> sockets;
     thread t;
 };
 
