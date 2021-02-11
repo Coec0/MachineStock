@@ -7,15 +7,16 @@ import json
 class Adapter:
 
     def __init__(self, host='127.0.0.1', port=2000, stocks=[]):
+        self.stocks = stocks
         self.host = host
         self.port = port
         self.queue = queue.Queue()
         threading.Thread(target=self.__tcp, daemon=True).start() #Start listening
-    
-    def __tcp(self): 
+
+    def __tcp(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((self.host, self.port))
-            stock_string = (';'.join(stocks)) + "\0"
+            stock_string = (';'.join(self.stocks)) + "\0"
             print(stock_string)
             length_stocks = struct.pack('>I', len(stock_string))
             s.send(length_stocks)

@@ -1,30 +1,32 @@
 import torch
 import numpy as np
 import collections
-import adapter
+from adapter import Adapter
 import threading
-import data_handler
+from data_handler import DataHandler
 
 class StockPredictor:
 
-    def __init__(self, stockname, input_buffer_size):
-        self.stockname = stockname
+    def __init__(self, stocks, input_buffer_size):
+        self.stocks = stocks
         self.input_buffer_size = input_buffer_size
-        self.input_adapter = Adapter()
+
+        host = "127.0.0.0"
+        port = 2000
+        self.input_adapter = Adapter(host, port, stocks)
 
         parameters = {
             "build_delay" : 1,
-            "stocks" : ["Ericsson_A"],
+            "stocks" : stocks,
             "math_features" : ["average", "variance"],
             "nbr_market_orders" : 20 }
 
         self.data_handler = DataHandler(self.input_adapter, parameters)
         self.load_model()
-        self.start()
 
     def load_model(self, suffix=""):
         suffix = "-"+suffix if suffix != "" else ""
-        self.model = torch.load("models/"+self.stockname+suffix+".model")
+        self.model = torch.load("models/"+self.stocks[0]+suffix+".model") #TEmp only one stock
 
 
     def send_prediction(pred):

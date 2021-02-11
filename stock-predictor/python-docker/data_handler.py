@@ -9,25 +9,24 @@ class DataHandler:
         #  If time delay is zero then give next input vector when
         #  a market order is found
 
-        #Paramters include: build_delay, stocks, math_features, buffer_size, market_order_paramters
+        #Paramters include: build_delay, stocks, math_features, market_order_paramters
         self.useAvg = False
         self.useVar = False
 
-        self.build_delay = parameters.build_delay
+        self.build_delay = parameters["build_delay"]
         self.last_build_time = round(time.time())
         self.input_vector_queue = queue.Queue()
-        self.buffer_size = buffer_size
         self.input_adapter = input_adapter
-        self.stocks = parameters.stocks
-        self.set_math_features(parameters.math_features)
+        self.stocks = parameters["stocks"]
+        self.set_math_features(parameters["math_features"])
 
         self.market_orders = {}
         self.price_sum = {}
         self.square_price_sum = {}
         self.stock_count = {}
 
-        for stock in stocks:
-            self.market_orders[stock] = collections.deque(maxlen=parameters.nbr_market_orders)
+        for stock in self.stocks:
+            self.market_orders[stock] = collections.deque(maxlen=parameters["nbr_market_orders"])
             self.price_sum[stock] = 0
             self.square_price_sum[stock] = 0
             self.stock_count[stock] = 0
