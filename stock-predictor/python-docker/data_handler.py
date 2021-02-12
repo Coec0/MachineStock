@@ -19,14 +19,16 @@ class DataHandler:
         self.input_adapter = input_adapter
         self.stocks = parameters["stocks"]
         self.set_math_features(parameters["math_features"])
-
+        self.nbr_market_orders = parameters["nbr_market_orders"]
+        
+        self.is_queues_filled = False
         self.market_orders = {}
         self.price_sum = {}
         self.square_price_sum = {}
         self.stock_count = {}
 
         for stock in self.stocks:
-            self.market_orders[stock] = collections.deque(maxlen=parameters["nbr_market_orders"])
+            self.market_orders[stock] = collections.deque(maxlen=self.nbr_market_orders)
             self.price_sum[stock] = 0
             self.square_price_sum[stock] = 0
             self.stock_count[stock] = 0
@@ -66,7 +68,7 @@ class DataHandler:
             square_sum = self.square_price_sum[stock]
             n = self.stock_count[stock]
             square_avg = square_sum / n
-            var = square_sum - square_avg / ((n-1)+0.00001)
+            var = (square_sum - square_avg) / ((n-1)+0.00001)
             variances.append(var)
         return variances
 
@@ -85,13 +87,23 @@ class DataHandler:
             stack.append(variances)
 
         return np.hstack(stack)
-
+    
+    def verify_queue_size(self):
+        if(self.is_queues_filled):
+            return True
+        for stock in self.stocks:
+            if(len(self.market_orders[stock]) < self.nbr_market_orders):
+                return False
+        self.is_queues_filled = True
+        return True
+           
+ 
     def run(self):
         while(True):
             market_order = self.input_adapter.get()
             self.process_data(market_order)
             now = round(time.time())
-            if(now - self.last_build_time >= self.build_delay):
+            if(now - self.last_build_time >= self.build_delay and self.verify_queue_size()):
                 input_vector = self.build_input()
                 print(input_vector)
                 self.input_vector_queue.put(input_vector)
@@ -99,3 +111,5 @@ class DataHandler:
 
     def get_input_data(self):
         return self.input_vector_queue.get()
+        
+

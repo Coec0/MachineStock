@@ -21,7 +21,7 @@ class StockPredictor:
             "build_delay" : 1,
             "stocks" : stocks,
             "math_features" : ["average", "variance"],
-            "nbr_market_orders" : 20 }
+            "nbr_market_orders" : input_buffer_size }
 
         self.data_handler = DataHandler(self.input_adapter, parameters)
         print("DATAHANDLER ACCEPTED")
