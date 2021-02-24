@@ -1,0 +1,35 @@
+Stock input
+Stock ouput
+Tranining loss (last epoch)
+Dev/Val loss (last epoch)
+Window size
+Learning rate
+Model shape
+Loss function
+
+---------------------------------------------------
+
+Price
+Swedbank A - 10 - 30 - 70 marketorders, 15s-1min-5min Exakt pris, UppNerMellan
+
+Price and volume
+Swedbank A - 10 - 30 - 70 marketorders,  15s-1min-5min Exakt pris, UppNerMellan
+
+Price, Exp moving average,  15s-1min-5min Exakt pris, UppNerMellan
+Swedbank A - 10 - 30 - 70 marketorders
+
+SEB
+Nordea
+
+Swebank SEB och Nordea i samma. 
+5-10-20-50
+
+(Undersöka Reafels papper. Börja med ekla modeller)
+
+Om tid testa träna med de modellerna
+
+
+
+
+
+
