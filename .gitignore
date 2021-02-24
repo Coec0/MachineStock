@@ -8,6 +8,8 @@ stock-predictor/python-train/combined.csv
 stock-predictor/python-train/.ipynb_checkpoints/
 stock-predictor/python-docker/__pycache__/
 stock-predictor/python-docker/market_orders_sorted.csv
+stock-predictor/python-docker/data/
+stock-predictor/python-train/data/
 cmake-build-debug/
 .idea/
 market-order-simulator/*.list
