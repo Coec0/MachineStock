@@ -1,78 +1,149 @@
 import math
 import pandas as pd
+from threading import Thread
+import subprocess
+from datetime import datetime
+from datetime import timedelta
 
 class TargetCalculator:
 
-    def __init__(self, stock, dataframe, start_time=1604304002):
+    def __init__(self, stock, dataframe, start_time=1604358000):#1604390402): #1604304002
         self.stock = stock
-        self.dataset = dataframe[(dataframe["publication_time"] >= start_time) & (dataframe["stock"] == stock)]
+        self.dataset = dataframe[(dataframe["publication_time"] >= start_time) & (dataframe["stock"] == stock)].reset_index(drop=True)
+        self.dataset
         self.pointer = 0
         self.current_time = start_time
-        self.current_data = None
+        self.current_price = dataframe[(dataframe["publication_time"] <= start_time) & (dataframe["stock"] == stock)].iloc[-1]["price"]
         self.values = [None for _ in range(21)]
         print(self.dataset)
-        self.step() #Step to end of start_time and also set current_data
+        self.step() #Step to end of start_time and also set current_price
+        self.__update_get_data()
         
     #Step one second
     def step(self):
-        if self.dataset["publication_time"].iloc[self.pointer+1] == self.current_time:
+        if self.pointer+1 >= len(self.dataset):
+            return False
+            
+        if self.dataset.at[self.pointer+1, "publication_time"] <= self.current_time:
             self.pointer += self.__last_entry_offset_from_timestamp(self.pointer)
-            self.current_data = self.dataset.iloc[self.pointer]
+            self.current_price = self.dataset.at[self.pointer, "price"]
+            self.__update_get_data()
+        self.current_time+=self.__market_open_time_increase(self.current_time)      
+        return True
         
-        self.current_time+=1
-        self.values[0] = self.__latest_price_after_time(15)
-        self.values[1] = self.__average_price_after_time(15)
-        self.values[2] = self.__price_up_down(15)
-        self.values[3] = self.__latest_price_after_time(30)
-        self.values[4] = self.__average_price_after_time(30)
-        self.values[5] = self.__price_up_down(30)
-        self.values[6] = self.__latest_price_after_time(45)
-        self.values[7] = self.__average_price_after_time(45)
-        self.values[8] = self.__price_up_down(45)
-        self.values[9] = self.__latest_price_after_time(60)
-        self.values[10] = self.__average_price_after_time(60)
-        self.values[11] = self.__price_up_down(60)
-        self.values[12] = self.__latest_price_after_time(180)
-        self.values[13] = self.__average_price_after_time(180)
-        self.values[14] = self.__price_up_down(180)
-        self.values[15] = self.__latest_price_after_time(300)
-        self.values[16] = self.__average_price_after_time(300)
-        self.values[17] = self.__price_up_down(300)
-        self.values[18] = self.__latest_price_after_time(600)
-        self.values[19] = self.__average_price_after_time(600)
-        self.values[20] = self.__price_up_down(600)       
+    
+    def __update_get_data(self):
+        values = [None for _ in range(21)]
+        #t1 = Thread(target=self.__update_value_thread, args=(values, 0, 15))
+        #t2 = Thread(target=self.__update_value_thread, args=(values, 3, 30))
+        #t3 = Thread(target=self.__update_value_thread, args=(values, 6, 45))
+        #t4 = Thread(target=self.__update_value_thread, args=(values, 9, 60))
+        #t5 = Thread(target=self.__update_value_thread, args=(values, 12, 180))
+        #t6 = Thread(target=self.__update_value_thread, args=(values, 15, 300))
+        #t7 = Thread(target=self.__update_value_thread, args=(values, 18, 600))
+
+        #t1.start()
+        #t2.start()
+        #t3.start()
+        #t4.start()
+        #t5.start()
+        #t6.start()
+        #t7.start()
+
+        #t1.join()
+        #t2.join()
+        #t3.join()
+        #t4.join()
+        #t5.join()
+        #t6.join()
+        #t7.join()
         
+        self.__update_value_thread(values, 0, 15)
+        self.__update_value_thread(values, 3, 30)
+        self.__update_value_thread(values, 6, 45)
+        self.__update_value_thread(values, 9, 60)
+        self.__update_value_thread(values, 12, 180)
+        self.__update_value_thread(values, 15, 300)
+        self.__update_value_thread(values, 18, 600)
+        self.values = values
         
+    def __update_value_thread(self, value_list, start_index, time):
+        future_pointer, value_list[start_index] = self.__latest_price_after_time(time)
+        value_list[start_index+1] = self.__average_price_after_time(time, future_pointer)
+        value_list[start_index+2] = self.__price_up_down(time, value_list[start_index])
+    
+    def __market_open_time_increase(self, time):
+        dt = datetime.fromtimestamp(time)
+        is_open = dt.weekday() <= 4
+        is_open = is_open and (dt.hour >= 9 and dt.hour < 18 and (False if dt.hour == 17 and dt.minute >= 29 and dt.second >= 59 else True))
+        if is_open:
+            return 1
+            
+        delta_days=0 if dt.hour < 9 else 1
+        if dt.weekday() >= 4:
+            delta_days = 7 - dt.weekday();
+            
+        tomorrow = dt.replace(hour=9, minute=0, second=0, microsecond=0) + \
+                   timedelta(days=delta_days)
+        return (tomorrow - dt).total_seconds()
+    
     #Get current second
     def get(self):
-        print(self.current_data["price"])
-        return self.values
+        values = self.values.copy()
+        values.append(self.current_time)
+        return values
     
     def __last_entry_offset_from_timestamp(self, pointer):
         offset=0
-        while self.current_time == self.dataset["publication_time"].iloc[pointer+offset+1]:
-            offset+=1 #Loop until pointing at last entry of timestamp
+        try:
+            while self.current_time >= self.dataset.at[pointer+offset+1, "publication_time"]:
+                offset+=1 #Loop until pointing at last entry of timestamp
+        except:
+            print("EOF reached")
         return offset
         
-    def __average_price_after_time(self, time):
+    def __average_price_after_time(self, time, future_pointer):
         beta = 0.05
         limit = math.ceil(beta * time)
-        upper_limit = self.dataset["publication_time"] <= (self.current_time + time + limit)
-        lower_limit = self.dataset["publication_time"] >= (self.current_time + time - limit)
-        prices = self.dataset[lower_limit & upper_limit]["price"]
-        return self.__latest_price_after_time(time) if prices.size == 0 else prices.agg(['mean']).iloc[0]
+        upper_limit_pointer = future_pointer
+        lower_limit_pointer = future_pointer
+        try:
+            while self.dataset.at[lower_limit_pointer, "publication_time"] <= self.current_time+time-limit :
+                lower_limit_pointer-=1
+        except:
+            lower_limit_pointer+=1 #SOF reached
         
+        try:
+            while self.dataset.at[upper_limit_pointer, "publication_time"] <= self.current_time+time+limit :
+                upper_limit_pointer+=1
+        except:
+            upper_limit_pointer-=1 #EOF reached
         
+        if upper_limit_pointer == upper_limit_pointer :
+            return self.dataset.at[future_pointer, "price"]
+        
+        orders = upper_limit_pointer - lower_limit_pointer
+        sum_orders=0
+        for i in range(orders):
+            sum_orders+=self.dataset.at[lower_limit_pointer+i, "price"]
+
+        return sum_orders/orders
+    
     
     def __latest_price_after_time(self, time):
         lookup_time = self.current_time + time
-        return self.dataset[self.dataset["publication_time"] <= lookup_time].iloc[-1]["price"]
+        offset = self.pointer
+        try:
+            while self.dataset.at[offset, "publication_time"] <= lookup_time :
+                offset+=1
+        except:
+            offset-=1 #EOF reached
+        return offset, self.dataset.at[offset,"price"]
         
-    def __price_up_down(self, time):
-        price = self.__latest_price_after_time(time)
-        if price < self.current_data["price"]:
+    def __price_up_down(self, time, future_price):
+        if future_price < self.current_price:
             return -1
-        if price > self.current_data["price"]:
+        if future_price > self.current_price:
             return 1
         return 0
         
