@@ -19,6 +19,7 @@ class DataHandler:
         self.input_adapter = input_adapter
         self.stocks = parameters["stocks"]
         self.set_math_features(parameters["math_features"])
+        self.market_order_features = parameters["market_order_features"]
         self.nbr_market_orders = parameters["nbr_market_orders"]
         
         self.is_queues_filled = False
@@ -46,7 +47,12 @@ class DataHandler:
         stock = market_order["stock"]
         price = market_order["price"]
         #Onnly save relevant data
-        self.market_orders[stock].append([price])
+        
+        features = []
+        for feature in self.market_order_features:
+            features.append(market_order[feature])
+            
+        self.market_orders[stock].append(features)
 
         if(self.useAvg or self.useVar):
             self.stock_count[stock] += 1
