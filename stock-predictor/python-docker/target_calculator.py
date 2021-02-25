@@ -4,13 +4,15 @@ from threading import Thread
 import subprocess
 from datetime import datetime
 from datetime import timedelta
+from timeit import default_timer as timer
 
 class TargetCalculator:
 
-    def __init__(self, stock, dataframe, start_time=1604358000):#1604390402): #1604304002
+    def __init__(self, stock, dataframe, window_size, start_time=1604358000):#1604390402): #1604304002
         self.stock = stock
+        self.new_day = False
         self.dataset = dataframe[(dataframe["publication_time"] >= start_time) & (dataframe["stock"] == stock)].reset_index(drop=True)
-        self.dataset
+        self.window_size = window_size
         self.pointer = 0
         self.current_time = start_time
         self.current_price = dataframe[(dataframe["publication_time"] <= start_time) & (dataframe["stock"] == stock)].iloc[-1]["price"]
@@ -24,11 +26,19 @@ class TargetCalculator:
         if self.pointer+1 >= len(self.dataset):
             return False
             
-        if self.dataset.at[self.pointer+1, "publication_time"] <= self.current_time:
+        self.current_time+=self.__market_open_time_increase(self.current_time)
+        
+        if self.new_day:
+            self.pointer+=self.window_size
+            self.current_time = self.dataset.at[self.pointer, "publication_time"]
             self.pointer += self.__last_entry_offset_from_timestamp(self.pointer)
             self.current_price = self.dataset.at[self.pointer, "price"]
             self.__update_get_data()
-        self.current_time+=self.__market_open_time_increase(self.current_time)      
+            self.new_day = False  
+        elif self.dataset.at[self.pointer+1, "publication_time"] <= self.current_time:
+            self.pointer += self.__last_entry_offset_from_timestamp(self.pointer)
+            self.current_price = self.dataset.at[self.pointer, "price"]
+            self.__update_get_data()     
         return True
         
     
@@ -85,6 +95,7 @@ class TargetCalculator:
             
         tomorrow = dt.replace(hour=9, minute=0, second=0, microsecond=0) + \
                    timedelta(days=delta_days)
+        self.new_day = True
         return (tomorrow - dt).total_seconds()
     
     #Get current second
@@ -108,7 +119,7 @@ class TargetCalculator:
         upper_limit_pointer = future_pointer
         lower_limit_pointer = future_pointer
         try:
-            while self.dataset.at[lower_limit_pointer, "publication_time"] <= self.current_time+time-limit :
+            while self.dataset.at[lower_limit_pointer, "publication_time"] >= self.current_time+time-limit :
                 lower_limit_pointer-=1
         except:
             lower_limit_pointer+=1 #SOF reached
@@ -119,7 +130,7 @@ class TargetCalculator:
         except:
             upper_limit_pointer-=1 #EOF reached
         
-        if upper_limit_pointer == upper_limit_pointer :
+        if upper_limit_pointer == lower_limit_pointer :
             return self.dataset.at[future_pointer, "price"]
         
         orders = upper_limit_pointer - lower_limit_pointer
