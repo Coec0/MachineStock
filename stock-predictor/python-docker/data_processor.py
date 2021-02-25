@@ -41,9 +41,16 @@ class DataProcessor:
             mr.append(market_order["volume"])
         return mr
 
+    def clear(self):
+        self.processed["window"].clear()
+
+    def is_window_filled(self):
+        return len(self.processed["window"]) == self.window_size
+
     def process(self, market_order): #JSON/dict
         mr = self.trim_market_order(market_order)
         self.processed["window"].append(mr)
+
         if(self.useExpAvgPrice):
             self.update_exp_avg_price(market_order["price"])
 

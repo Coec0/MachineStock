@@ -15,10 +15,10 @@ def build_input_row(stocks, data_processors, time):
 
     for stock in stocks:
         financial_models = np.array(data_processors[stock].get_financial_models())
-        if(financial_models != None):
+        if(len(financial_models)>0):
             stack.append(financial_models)
 
-    #stack.append([time])
+    stack.append([time])
 
     return np.hstack(stack)
 
@@ -41,7 +41,17 @@ def get_column_names(params):
     for stock in params["stocks"]:
         for model in params["financial_models"]:
             cols.append(stock+model)
+
+    cols.append("ts")
     return cols
+
+def clear_data_processors(data_processors):
+    for _,dp in data_processors.items():
+        dp.clear()
+
+def is_market_day_over(time):
+    dt = datetime.fromtimestamp(time)
+    return dt.hour >= 17 and dt.minute >= 30
 
 def create_train_data(input, params):
     start = timer()
@@ -61,9 +71,7 @@ def create_train_data(input, params):
         data_processors[stock] = dp
 
     print(start_time)
-
     time = start_time
-
     data = data[data["publication_time"] >= time]
 
     market_orders = gen_rows(data)
@@ -71,23 +79,29 @@ def create_train_data(input, params):
     print("Processing market orders ...")
     rows = []
     for market_order in market_orders:
+        stock = market_order["stock"]
+
         if(market_order["publication_time"] > time):
+
             row = build_input_row(params["stocks"], data_processors, time)
             while(market_order["publication_time"] > time):
-                if is_market_open(time): rows.append(row)
-                time += 1
-
-        data_processors[market_order["stock"]].process(market_order)
+                if not is_market_open(time):
+                    clear_data_processors(data_processors)
+                    time = market_order["publication_time"]
+                elif data_processors[stock].is_window_filled():
+                    time += 1
+                    rows.append(row)
+                else:
+                    time += 1
+        data_processors[stock].process(market_order)
 
     print(time)
     print("Rows amount: " + str(len(rows)))
-    print(rows[0])
-    print(rows[200000])
-    print(rows[-1])
 
     print("Saving to csv ...")
     df = pd.DataFrame(rows, columns=get_column_names(params))
-    df.to_csv("x.csv", index=False, sep = ';')
+    now = datetime.now().strftime("%H_%M")
+    df.to_csv("x_"+now+".csv", index=False, sep = ';')
 
     end = timer()
     print("Time: "+str(end-start)+"s")
@@ -96,7 +110,7 @@ def create_train_data(input, params):
 
 params = {
     "stocks" : ["Swedbank_A"],
-    "window_size" : 20,
+    "window_size" : 30,
     "financial_models" : [],
     "market_order_features" : ["price", "volume"]
 }
