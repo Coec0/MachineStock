@@ -29,6 +29,7 @@ class TargetCalculator:
         self.current_time+=self.__market_open_time_increase(self.current_time)
         
         if self.new_day:
+            self.pointer += self.__last_entry_offset_from_timestamp(self.pointer)
             self.pointer+=self.window_size
             self.current_time = self.dataset.at[self.pointer, "publication_time"]
             self.pointer += self.__last_entry_offset_from_timestamp(self.pointer)
