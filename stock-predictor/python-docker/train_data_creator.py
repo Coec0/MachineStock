@@ -6,6 +6,7 @@ from timeit import default_timer as timer
 import numpy as np
 from time import sleep
 import csv
+import gc
 
 def build_input_row(stocks, data_processors, time):
     stack = []
@@ -66,7 +67,7 @@ def create_train_data(input, params):
     data_processors ={}
     print("Calc starting window ...")
     for stock in params["stocks"]:
-        dp = DataProcessor(stock, params["window_size"], useVol = True, useExpAvgPrice=False)
+        dp = DataProcessor(stock, params["window_size"], useVol = False, useExpAvgPrice=False)
         start_time = dp.process_start_window(data)
         data_processors[stock] = dp
 
@@ -83,12 +84,13 @@ def create_train_data(input, params):
 
         if(market_order["publication_time"] > time):
 
-            row = build_input_row(params["stocks"], data_processors, time)
+            
             while(market_order["publication_time"] > time):
                 if not is_market_open(time):
                     clear_data_processors(data_processors)
                     time = market_order["publication_time"]
                 elif data_processors[stock].is_window_filled():
+                    row = build_input_row(params["stocks"], data_processors, time)
                     time += 1
                     rows.append(row)
                 else:
@@ -98,10 +100,26 @@ def create_train_data(input, params):
     print(time)
     print("Rows amount: " + str(len(rows)))
 
-    print("Saving to csv ...")
-    df = pd.DataFrame(rows, columns=get_column_names(params))
+    
+    #print("Converting to pandas dataframe ...")
+    #del data
+    #gc.collect() #Free memory
+    #df = pd.DataFrame(rows, columns=get_column_names(params))
     now = datetime.now().strftime("%H_%M")
-    df.to_csv("x_"+now+".csv", index=False, sep = ';')
+    #print("Saving to csv ...")
+    #df.to_csv("x_"+now+".csv", index=False, sep = ';')
+
+    #data = [['Geeks'], [4], ['geeks !']] 
+
+    # opening the csv file in 'w+' mode 
+    file = open("x_"+now+".csv", 'w+', newline ='')
+    
+    rows.insert(0, get_column_names(params))
+
+    # writing the data into the file 
+    with file:
+        write = csv.writer(file, delimiter=';') 
+        write.writerows(rows)
 
     end = timer()
     print("Time: "+str(end-start)+"s")
@@ -110,9 +128,9 @@ def create_train_data(input, params):
 
 params = {
     "stocks" : ["Swedbank_A"],
-    "window_size" : 30,
+    "window_size" : 500,
     "financial_models" : [],
-    "market_order_features" : ["price", "volume"]
+    "market_order_features" : ["price"]
 }
 create_train_data("market_orders_sorted.csv", params)
 
