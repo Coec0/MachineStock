@@ -5,7 +5,7 @@ from datetime import timedelta
 from timeit import default_timer as timer
 
 class DataProcessor:
-    def __init__(self, stock, window_size, usePrice=True, beta=0.98, useVol=True ,useExpAvgPrice=True): #["price, volume, --mnt--p, publicationtime"]
+    def __init__(self, stock, window_size, usePrice=True, beta=0.98, useVol=False ,useExpAvgPrice=True): #["price, volume, --mnt--p, publicationtime"]
         self.useExpAvgPrice = useExpAvgPrice
         self.usePrice = usePrice
         self.useVol = useVol
