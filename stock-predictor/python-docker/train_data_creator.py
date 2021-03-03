@@ -12,7 +12,8 @@ def build_input_row(stocks, data_processors, time):
     stack = []
     for stock in stocks:
         market_orders = np.array(data_processors[stock].get_window()).ravel()
-        stack.append(market_orders)
+        if(len(market_orders)>0):
+            stack.append(market_orders)
 
     for stock in stocks:
         financial_models = np.array(data_processors[stock].get_financial_models())
@@ -123,8 +124,8 @@ def create_train_data(input, params, data):
 
 params1 = {
     "stocks" : ["Swedbank_A"],
-    "window_size" : 1,
-    "financial_models" : ["rsi"],
+    "window_size" : 0,
+    "financial_models" : ["macd"],
     "market_order_features" : ["price"]
 }
 

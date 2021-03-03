@@ -5,22 +5,27 @@ from datetime import timedelta
 from timeit import default_timer as timer
 
 class DataProcessor:
-    def __init__(self, stock, params, beta=0.98): #["price, volume, --mnt--p, publicationtime"]
-        self.useExpAvgPrice = "exp_avg_price" in params["financial_models"]
+    def __init__(self, stock, params): #["price, volume, --mnt--p, publicationtime"]
+        self.useEMA = "ema" in params["financial_models"]
         self.useRSI = "rsi" in params["financial_models"]
+        self.useMACD = "macd" in params["financial_models"]
         self.usePrice = "price" in params["market_order_features"]
         self.useVol = "volume" in params["market_order_features"]
         self.stock = stock
-        self.beta = beta
         self.params = params
         self.window_size = params["window_size"]
         self.rsi = {"window" : deque(maxlen=14),
                     "open": 0,
                     "latest": 0,
                     "seg_start": -1}
+        self.ema = {"window26" : deque(maxlen=26),
+                    "beta": 0.98,
+                    "seg_start": -1}
         self.processed = {"window" : deque(maxlen=self.window_size),
-                          "exp_avg_price" : 0,
-                          "rsi" : 0}
+                          "rsi" : 0,
+                          "ema12":0,
+                          "ema26":0,
+                          "macd" :0}
 
     def gen_rows(self, df):
         for row in df.itertuples(index=False):
@@ -31,16 +36,36 @@ class DataProcessor:
 
     def get_financial_models(self):
         data = []
-        if(self.useExpAvgPrice):
-            data.append(self.processed["exp_avg_price"])
+        if(self.useEMA):
+            data.append(self.processed["ema12"])
+            data.append(self.processed["ema26"])
         if(self.useRSI):
             data.append(self.processed["rsi"])
+        if(self.useMACD):
+            data.append(self.processed["macd"])
         return data
 
-    def update_exp_avg_price(self, price):
-        old_exp_avg = self.processed["exp_avg_price"]
-        new_exp_avg = self.beta*old_exp_avg + (1-self.beta)*price
-        self.processed["exp_avg_price"] = new_exp_avg
+    def update_ema(self, mo):
+        if(self.ema["seg_start"] == -1):
+            self.ema["seg_start"] = mo["publication_time"]
+        if(mo["publication_time"] > self.ema["seg_start"]+5*60):
+            self.ema["window26"].append(mo["price"])
+            ema12, ema26 = self.calc_ema()
+            self.processed["ema12"] = ema12
+            self.processed["ema26"] = ema26
+
+    def calc_ema(self):
+        count = 0
+        ema12 = self.processed["ema12"]
+        ema26 = self.processed["ema26"]
+        w12 = 2 / 13
+        w26 = 2 / 27
+        for p in self.ema["window26"]:
+            ema26 = w26*p + (1-w26)*ema26
+            if(count >= 14):
+                ema12 = w12*p + (1-w12)*ema12
+            count += 1
+        return (ema12,ema26)
 
     def update_rsi(self, mo):
         if(self.rsi["seg_start"] == -1):
@@ -48,7 +73,7 @@ class DataProcessor:
         if(mo["publication_time"] > self.rsi["seg_start"]+5*60):
             diff = self.rsi["open"] - self.rsi["latest"]
             self.rsi["window"].append(diff)
-            self.rsi["seg_start"] = self.rsi["seg_start"]+5*60 #must fix later
+            self.rsi["seg_start"] = self.rsi["seg_start"]+5*60
             self.rsi["open"] = mo["price"]
             self.processed["rsi"] = self.calc_rsi()
         self.rsi["latest"] = mo["price"]
@@ -80,6 +105,10 @@ class DataProcessor:
         self.rsi["seg_start"] = -1
         self.rsi["window"].clear()
 
+        #reset ema
+        self.ema["seg_start"] = -1
+        #self.ema["window26"].clear()
+
     def is_window_filled(self):
         return len(self.processed["window"]) == self.window_size
 
@@ -87,11 +116,14 @@ class DataProcessor:
         mr = self.trim_market_order(market_order)
         self.processed["window"].append(mr)
 
-        if(self.useExpAvgPrice):
-            self.update_exp_avg_price(market_order["price"])
+        if(self.useEMA or self.useMACD):
+            self.update_ema(market_order)
 
         if(self.useRSI):
             self.update_rsi(market_order)
+
+        if(self.useMACD):
+            self.processed["macd"] = self.processed["ema12"] - self.processed["ema26"]
 
     # df - pandas dataframe sorted by publication_time
     def process_start_window(self, df):
