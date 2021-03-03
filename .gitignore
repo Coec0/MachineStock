@@ -13,3 +13,4 @@ stock-predictor/python-train/data/
 cmake-build-debug/
 .idea/
 market-order-simulator/*.list
+*.csv
