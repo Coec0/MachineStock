@@ -13,16 +13,16 @@ def build_input_row(stocks, data_processors, time):
     for stock in stocks:
         market_orders = np.array(data_processors[stock].get_window()).ravel()
         if(len(market_orders)>0):
-            stack.append(market_orders)
+            stack.extend(market_orders)
 
     for stock in stocks:
         financial_models = np.array(data_processors[stock].get_financial_models())
         if(len(financial_models)>0):
-            stack.append(financial_models)
+            stack.extend(financial_models)
 
-    stack.append([int(time)])
-
-    return np.hstack(stack)
+    stack.append(int(time))
+    stack = [ '%.4f' % elem for elem in stack ]
+    return stack
 
 def is_market_open(time):
     dt = datetime.fromtimestamp(time)
@@ -56,7 +56,6 @@ def is_market_day_over(time):
 
 def create_train_data(input, params, data):
     start = timer()
-
 
     filter = data["stock"] == params["stocks"][0]
     for stock in params["stocks"]:
@@ -102,6 +101,14 @@ def create_train_data(input, params, data):
     #del data
     #gc.collect() #Free memory
     #df = pd.DataFrame(rows, columns=get_column_names(params))
+    s = params["stocks"][0]
+    w = str(params["window_size"])
+
+    fms = ""
+    for f in params["financial_models"]:
+        fms = fms + "_" + f
+
+    name = "x_" + stock + "_" + w + "_p" + fms
     now = datetime.now().strftime("%H_%M")
     #print("Saving to csv ...")
     #df.to_csv("x_"+now+".csv", index=False, sep = ';')
@@ -109,7 +116,7 @@ def create_train_data(input, params, data):
     #data = [['Geeks'], [4], ['geeks !']]
 
     # opening the csv file in 'w+' mode
-    file = open("x_"+now+".csv", 'w+', newline ='')
+    file = open(name+".csv", 'w+', newline ='')
 
     rows.insert(0, get_column_names(params))
 
@@ -124,7 +131,7 @@ def create_train_data(input, params, data):
 
 params1 = {
     "stocks" : ["Swedbank_A"],
-    "window_size" : 0,
+    "window_size" : 10,
     "financial_models" : ["macd"],
     "market_order_features" : ["price"]
 }
