@@ -20,7 +20,7 @@ def build_input_row(stocks, data_processors, time):
         if(len(financial_models)>0):
             stack.append(financial_models)
 
-    stack.append([time])
+    stack.append([int(time)])
 
     return np.hstack(stack)
 
