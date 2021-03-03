@@ -5,18 +5,11 @@ from datetime import timedelta
 from timeit import default_timer as timer
 
 class DataProcessor:
-<<<<<<< HEAD
     def __init__(self, stock, params, beta=0.98): #["price, volume, --mnt--p, publicationtime"]
         self.useExpAvgPrice = "exp_avg_price" in params["financial_models"]
         self.useRSI = "rsi" in params["financial_models"]
         self.usePrice = "price" in params["market_order_features"]
         self.useVol = "volume" in params["market_order_features"]
-=======
-    def __init__(self, stock, window_size, usePrice=True, beta=0.98, useVol=False ,useExpAvgPrice=True): #["price, volume, --mnt--p, publicationtime"]
-        self.useExpAvgPrice = useExpAvgPrice
-        self.usePrice = usePrice
-        self.useVol = useVol
->>>>>>> 743f6446195f1dee768be844f5f2fe26ec59fc47
         self.stock = stock
         self.beta = beta
         self.params = params
