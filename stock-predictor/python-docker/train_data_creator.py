@@ -41,7 +41,6 @@ def get_column_names(params):
     for stock in params["stocks"]:
         for model in params["financial_models"]:
             cols.append(stock+model)
-
     cols.append("ts")
     return cols
 
@@ -53,10 +52,9 @@ def is_market_day_over(time):
     dt = datetime.fromtimestamp(time)
     return dt.hour >= 17 and dt.minute >= 30
 
-def create_train_data(input, params):
+def create_train_data(input, params, data):
     start = timer()
-    print("Reading csv ...")
-    data = pd.read_csv(input, sep=";")
+
 
     filter = data["stock"] == params["stocks"][0]
     for stock in params["stocks"]:
@@ -66,7 +64,7 @@ def create_train_data(input, params):
     data_processors ={}
     print("Calc starting window ...")
     for stock in params["stocks"]:
-        dp = DataProcessor(stock, params["window_size"], useVol = True, useExpAvgPrice=False)
+        dp = DataProcessor(stock, params)
         start_time = dp.process_start_window(data)
         data_processors[stock] = dp
 
@@ -82,19 +80,18 @@ def create_train_data(input, params):
         stock = market_order["stock"]
 
         if(market_order["publication_time"] > time):
-
-            row = build_input_row(params["stocks"], data_processors, time)
             while(market_order["publication_time"] > time):
                 if not is_market_open(time):
                     clear_data_processors(data_processors)
                     time = market_order["publication_time"]
                 elif data_processors[stock].is_window_filled():
-                    time += 1
+                    #rows.append([int(time)])
+                    row = build_input_row(params["stocks"], data_processors, time)
                     rows.append(row)
+                    time += 1
                 else:
                     time += 1
         data_processors[stock].process(market_order)
-
     print(time)
     print("Rows amount: " + str(len(rows)))
 
@@ -107,14 +104,19 @@ def create_train_data(input, params):
     print("Time: "+str(end-start)+"s")
     print("Done")
 
-
-params = {
+params1 = {
     "stocks" : ["Swedbank_A"],
-    "window_size" : 30,
-    "financial_models" : [],
-    "market_order_features" : ["price", "volume"]
+    "window_size" : 1,
+    "financial_models" : ["rsi"],
+    "market_order_features" : ["price"]
 }
-create_train_data("market_orders_sorted.csv", params)
+
+print("Reading csv ...")
+data = pd.read_csv("market_orders_sorted.csv", sep=";")
+create_train_data("market_orders_sorted.csv", params1, data)
+#create_train_data("market_orders_sorted.csv", params2, data)
+#create_train_data("market_orders_sorted.csv", params3, data)
+#create_train_data("market_orders_sorted.csv", params4, data)
 
 # input - filepath for input data CSV file
 # assume that CVS is sorted for publication time
