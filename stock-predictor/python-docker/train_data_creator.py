@@ -7,6 +7,7 @@ import numpy as np
 from time import sleep
 import csv
 import gc
+import decimal
 
 def build_input_row(stocks, data_processors, time):
     stack = []
@@ -21,7 +22,9 @@ def build_input_row(stocks, data_processors, time):
             stack.extend(financial_models)
 
     for i in range(len(stack)):
-        stack[i] = '%.4f' % stack[i]
+        d = decimal.Decimal(str(stack[i]))
+        if d.as_tuple().exponent < -4:
+            stack[i] = '%.4f' % stack[i]
 
     stack.append(int(time))
     return stack
@@ -107,7 +110,6 @@ def create_train_data(input, params, data):
                         time += 1
             data_processors[stock].process(market_order)
         print(time)
-        print("Rows amount: " + str(len(rows)))
 
     end = timer()
     print("Time: "+str(end-start)+"s")
@@ -115,8 +117,8 @@ def create_train_data(input, params, data):
 
 params1 = {
     "stocks" : ["Swedbank_A"],
-    "window_size" : 500,
-    "financial_models" : [],
+    "window_size" : 0,
+    "financial_models" : ["rsi"],
     "market_order_features" : ["price"]
 }
 
