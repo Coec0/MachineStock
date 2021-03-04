@@ -20,8 +20,9 @@ def build_input_row(stocks, data_processors, time):
         if(len(financial_models)>0):
             stack.extend(financial_models)
 
-    stack.append(int(time))
+
     stack = [ '%.4f' % elem for elem in stack ]
+    stack.append(int(time))
     return stack
 
 def is_market_open(time):
