@@ -7,6 +7,7 @@ import numpy as np
 from time import sleep
 import csv
 import gc
+import decimal
 
 def build_input_row(stocks, data_processors, time):
     stack = []
@@ -21,7 +22,9 @@ def build_input_row(stocks, data_processors, time):
             stack.extend(financial_models)
 
     for i in range(len(stack)):
-        stack[i] = '%.4f' % stack[i]
+        d = decimal.Decimal(str(stack[i]))
+        if d.as_tuple().exponent < -4:
+            stack[i] = '%.4f' % stack[i]
 
     stack.append(int(time))
     return stack
@@ -76,33 +79,7 @@ def create_train_data(input, params, data):
     data = data[data["publication_time"] >= time]
 
     market_orders = gen_rows(data)
-
-    print("Processing market orders ...")
-    rows = []
-    for market_order in market_orders:
-        stock = market_order["stock"]
-
-        if(market_order["publication_time"] > time):
-            while(market_order["publication_time"] > time):
-                if not is_market_open(time):
-                    clear_data_processors(data_processors)
-                    time = market_order["publication_time"]
-                elif data_processors[stock].is_window_filled():
-                    #rows.append([int(time)])
-                    row = build_input_row(params["stocks"], data_processors, time)
-                    rows.append(row)
-                    time += 1
-                else:
-                    time += 1
-        data_processors[stock].process(market_order)
-    print(time)
-    print("Rows amount: " + str(len(rows)))
-
-
-    #print("Converting to pandas dataframe ...")
-    #del data
-    #gc.collect() #Free memory
-    #df = pd.DataFrame(rows, columns=get_column_names(params))
+    
     s = params["stocks"][0]
     w = str(params["window_size"])
 
@@ -111,21 +88,28 @@ def create_train_data(input, params, data):
         fms = fms + "_" + f
 
     name = "x_" + stock + "_" + w + "_p" + fms
-    now = datetime.now().strftime("%H_%M")
-    #print("Saving to csv ...")
-    #df.to_csv("x_"+now+".csv", index=False, sep = ';')
-
-    #data = [['Geeks'], [4], ['geeks !']]
-
-    # opening the csv file in 'w+' mode
     file = open(name+".csv", 'w+', newline ='')
 
-    rows.insert(0, get_column_names(params))
-
-    # writing the data into the file
     with file:
         write = csv.writer(file, delimiter=';')
-        write.writerows(rows)
+        write.writerow(get_column_names(params))
+        print("Processing market orders ...")
+        for market_order in market_orders:
+            stock = market_order["stock"]
+
+            if(market_order["publication_time"] > time):
+                while(market_order["publication_time"] > time):
+                    if not is_market_open(time):
+                        clear_data_processors(data_processors)
+                        time = market_order["publication_time"]
+                    elif data_processors[stock].is_window_filled():
+                        row = build_input_row(params["stocks"], data_processors, time)
+                        write.writerow(row)
+                        time += 1
+                    else:
+                        time += 1
+            data_processors[stock].process(market_order)
+        print(time)
 
     end = timer()
     print("Time: "+str(end-start)+"s")
@@ -133,8 +117,8 @@ def create_train_data(input, params, data):
 
 params1 = {
     "stocks" : ["Swedbank_A"],
-    "window_size" : 10,
-    "financial_models" : ["macd"],
+    "window_size" : 0,
+    "financial_models" : ["rsi"],
     "market_order_features" : ["price"]
 }
 
