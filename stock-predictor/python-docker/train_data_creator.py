@@ -59,6 +59,47 @@ def is_market_day_over(time):
     dt = datetime.fromtimestamp(time)
     return dt.hour >= 17 and dt.minute >= 30
 
+def find_next_time(time_price_map, from_time, end_time):
+    while True:
+        from_time += 1
+        if from_time in time_price_map:
+            return from_time
+        elif from_time >= end_time:
+            return -1
+
+
+def create_y_data(time_price_map, start_time, end_time, stock, w):
+    print("Creating y data...")
+    current_time = start_time
+    time_jumps = [15, 30, 60, 300, 600]
+    name = "y_" + stock + "_" + w
+    file = open(name+".csv", 'w+', newline ='')
+
+    with file:
+
+        write = csv.writer(file, delimiter=';')
+        write.writerow(["15s", "30s", "60s", "300s", "600s"]) #TODO
+        print("Looping price map ...")
+        while current_time + time_jumps[-1] <= end_time:
+            row = []
+            for jump in time_jumps:
+                t = current_time + jump
+                if t in time_price_map:
+                    price = time_price_map[t]
+                    row.append(price)
+                else:
+                    current_time = find_next_time(time_price_map, t, end_time)
+                    break
+            if current_time == -1:
+                return
+            elif len(row) == len(time_jumps):
+                write.writerow(row)
+
+
+
+
+
+
 def create_train_data(input, params, data):
     start = timer()
 
@@ -79,7 +120,7 @@ def create_train_data(input, params, data):
     data = data[data["publication_time"] >= time]
 
     market_orders = gen_rows(data)
-    
+
     s = params["stocks"][0]
     w = str(params["window_size"])
 
@@ -87,29 +128,41 @@ def create_train_data(input, params, data):
     for f in params["financial_models"]:
         fms = fms + "_" + f
 
+    time_price_map = {}
+
     name = "x_" + stock + "_" + w + "_p" + fms
     file = open(name+".csv", 'w+', newline ='')
-
+    end_time = 0
+    i_tmp = 0
     with file:
         write = csv.writer(file, delimiter=';')
         write.writerow(get_column_names(params))
         print("Processing market orders ...")
         for market_order in market_orders:
+
             stock = market_order["stock"]
 
             if(market_order["publication_time"] > time):
                 while(market_order["publication_time"] > time):
+
                     if not is_market_open(time):
                         clear_data_processors(data_processors)
                         time = market_order["publication_time"]
                     elif data_processors[stock].is_window_filled():
+                        i_tmp += 1
                         row = build_input_row(params["stocks"], data_processors, time)
+                        end_time = row[-1]
+                        time_price_map[time] = row[-2]
                         write.writerow(row)
                         time += 1
                     else:
                         time += 1
+            if i_tmp > 1000:
+                break
             data_processors[stock].process(market_order)
         print(time)
+
+    create_y_data(time_price_map, start_time, end_time, stock, w)
 
     end = timer()
     print("Time: "+str(end-start)+"s")
@@ -117,8 +170,8 @@ def create_train_data(input, params, data):
 
 params1 = {
     "stocks" : ["Swedbank_A"],
-    "window_size" : 0,
-    "financial_models" : ["rsi"],
+    "window_size" : 5,
+    "financial_models" : [],
     "market_order_features" : ["price"]
 }
 
