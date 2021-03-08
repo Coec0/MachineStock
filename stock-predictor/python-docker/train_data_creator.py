@@ -8,24 +8,20 @@ from time import sleep
 import csv
 import gc
 import decimal
+import sys
+import os
 
-def build_input_row(stocks, data_processors, time):
+def build_input_row(stock, data_processors, time):
     stack = []
-    for stock in stocks:
-        market_orders = np.array(data_processors[stock].get_window()).ravel()
-        if(len(market_orders)>0):
-            stack.extend(market_orders)
+    #for stock in stocks:
+    market_orders = np.array((data_processors[stock].get_window())).ravel()
+    if(len(market_orders)>0):
+        stack.extend(market_orders)
 
-    for stock in stocks:
-        financial_models = np.array(data_processors[stock].get_financial_models())
-        if(len(financial_models)>0):
-            stack.extend(financial_models)
-
-    for i in range(len(stack)):
-        d = decimal.Decimal(str(stack[i]))
-        if d.as_tuple().exponent < -4:
-            stack[i] = '%.4f' % stack[i]
-
+    #for stock in stocks:
+    financial_models = list(data_processors[stock].get_financial_models())
+    if(len(financial_models)>0):
+        stack.extend(financial_models)
     stack.append(int(time))
     return stack
 
@@ -39,15 +35,13 @@ def gen_rows(df):
     for row in df.itertuples(index=False):
         yield row._asdict()
 
-def get_column_names(params):
+def get_column_names(stock, params):
     cols = []
     for i in range(params["window_size"]):
-        for stock in params["stocks"]:
-            for feature in params["market_order_features"]:
-                cols.append(stock+"-"+feature+"-"+str(i))
-    for stock in params["stocks"]:
-        for model in params["financial_models"]:
-            cols.append(stock+model)
+        for feature in params["market_order_features"]:
+            cols.append(stock+"-"+feature+"-"+str(i))
+    for model in params["financial_models"]:
+        cols.append(stock+model)
     cols.append("ts")
     return cols
 
@@ -67,53 +61,94 @@ def find_next_time(time_price_map, from_time, end_time):
         elif from_time >= end_time:
             return -1
 
+def get_up_down_target(cur_price, fut_price, threshold):
+    delta = threshold*cur_price
+    if(fut_price <= cur_price+delta and fut_price >= cur_price-delta):
+        return 1
+    elif(fut_price < cur_price):
+        return 0
+    else:
+        return 2
 
-def create_y_data(time_price_map, start_time, end_time, stock, w):
+def generate_x_name(params):
+    name = "x_" + params["stock"] + "_"
+    if(params["window_size"] > 0):
+        name += str(params["window_size"]) + "_"
+        for mof in params["market_order_features"]:
+            name += mof[0]
+    else:
+        fm = params["financial_models"][0]
+        name += fm
+    name += ".csv"
+    return name
+
+def generate_y_name(params):
+    name = "y_" + params["stock"] + "_"
+    if(params["window_size"] > 0):
+        name += str(params["window_size"])
+    name += ".csv"
+    return name
+
+def create_y_data(time_price_map, start_time, end_time, params):
     print("Creating y data...")
-    current_time = start_time
+    print("Map size: " + str(len(time_price_map)))
+    current_time = int(start_time)
     time_jumps = [15, 30, 60, 300, 600]
-    name = "y_" + stock + "_" + w
-    file = open(name+".csv", 'w+', newline ='')
+    dir_path = params["stock"] + "/"
+    name = generate_y_name(params)
+    file = open(dir_path+name, 'w+', newline ='')
 
     with file:
-
         write = csv.writer(file, delimiter=';')
-        write.writerow(["15s", "30s", "60s", "300s", "600s"]) #TODO
+        write.writerow(["15s", "15ud", "30s", "30ud", "60s", "60ud", "300s", "300ud", "600s", "600ud", "ts"]) #TODO
         print("Looping price map ...")
         while current_time + time_jumps[-1] <= end_time:
             row = []
+            if current_time in time_price_map:
+                cur_price = time_price_map[current_time]
             for jump in time_jumps:
                 t = current_time + jump
                 if t in time_price_map:
-                    price = time_price_map[t]
-                    row.append(price)
+                    fut_price = time_price_map[t]
+                    row.append(fut_price)
+                    row.append(get_up_down_target(cur_price, fut_price, params["threshold"]))
                 else:
                     current_time = find_next_time(time_price_map, t, end_time)
                     break
             if current_time == -1:
                 return
-            elif len(row) == len(time_jumps):
+            elif len(row) == 2*len(time_jumps):
+                row.append(int(current_time))
                 write.writerow(row)
+                current_time += 1
+
+
+def end_trade_day(write, data_processors, day):
+    clear_data_processors(data_processors)
+    pop_amount = min(len(day), 600)
+    for i in range(pop_amount):
+        day.pop()
+    write.writerows(day)
 
 
 
 
 
-
-def create_train_data(input, params, data):
+def create_train_data(params, _data):
     start = timer()
-
-    filter = data["stock"] == params["stocks"][0]
-    for stock in params["stocks"]:
-        filter = (data["stock"] == stock) | filter
-    data = data[filter]
+    stock = params["stock"]
+    print("Calculating for: " + stock)
+    filter = _data["stock"] == stock
+    #for stock in params["stocks"]:
+    #    filter = (data["stock"] == stock) | filter
+    data = _data[filter]
 
     data_processors ={}
     print("Calc starting window ...")
-    for stock in params["stocks"]:
-        dp = DataProcessor(stock, params)
-        start_time = dp.process_start_window(data)
-        data_processors[stock] = dp
+    #for stock in params["stocks"]:
+    dp = DataProcessor(stock, params)
+    start_time = dp.process_start_window(data)
+    data_processors[stock] = dp
 
     print(start_time)
     time = start_time
@@ -121,78 +156,73 @@ def create_train_data(input, params, data):
 
     market_orders = gen_rows(data)
 
-    s = params["stocks"][0]
-    w = str(params["window_size"])
-
-    fms = ""
-    for f in params["financial_models"]:
-        fms = fms + "_" + f
-
     time_price_map = {}
 
-    name = "x_" + stock + "_" + w + "_p" + fms
-    file = open(name+".csv", 'w+', newline ='')
+    dir_path = stock + "/"
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+
+    name = generate_x_name(params)
+    file = open(dir_path+name, 'w+', newline ='')
     end_time = 0
-    i_tmp = 0
+    day = []
     with file:
         write = csv.writer(file, delimiter=';')
-        write.writerow(get_column_names(params))
+        write.writerow(get_column_names(stock, params))
         print("Processing market orders ...")
         for market_order in market_orders:
-
-            stock = market_order["stock"]
-
             if(market_order["publication_time"] > time):
                 while(market_order["publication_time"] > time):
-
                     if not is_market_open(time):
-                        clear_data_processors(data_processors)
                         time = market_order["publication_time"]
+                        end_trade_day(write, data_processors, day)
+                        day = []
                     elif data_processors[stock].is_window_filled():
-                        i_tmp += 1
-                        row = build_input_row(params["stocks"], data_processors, time)
+                        row = build_input_row(stock, data_processors, time)
+                        day.append(row)
                         end_time = row[-1]
-                        time_price_map[time] = row[-2]
-                        write.writerow(row)
+                        if params["window_size"] != 0:
+                            time_price_map[time] = row[-2] #TODO NOT HARDCODE
                         time += 1
                     else:
                         time += 1
-            if i_tmp > 1000:
-                break
             data_processors[stock].process(market_order)
         print(time)
-
-    create_y_data(time_price_map, start_time, end_time, stock, w)
+        end_trade_day(write, data_processors, day)
+    if params["window_size"] != 0:
+        create_y_data(time_price_map, start_time, end_time, params)
 
     end = timer()
     print("Time: "+str(end-start)+"s")
-    print("Done")
 
-params1 = {
-    "stocks" : ["Swedbank_A"],
-    "window_size" : 5,
-    "financial_models" : [],
-    "market_order_features" : ["price"]
+
+params = {
+    "stocks" : ["Swedbank_A", "SEB_A"],
+    "window_sizes" : [1, 10],
+    "financial_models" : ["rsi", "macd"],
+    "market_order_features" : ["price"],
+    "threshold" : 0.0002
 }
 
-print("Reading csv ...")
-data = pd.read_csv("market_orders_sorted.csv", sep=";")
-create_train_data("market_orders_sorted.csv", params1, data)
-#create_train_data("market_orders_sorted.csv", params2, data)
-#create_train_data("market_orders_sorted.csv", params3, data)
-#create_train_data("market_orders_sorted.csv", params4, data)
+datafile = sys.argv[1]
+print("Reading csv: " + datafile)
+data = pd.read_csv(datafile, sep=";")
 
-# input - filepath for input data CSV file
-# assume that CVS is sorted for publication time
-# returns nparray with all data
+for stock in params["stocks"]:
+    param = {}
+    param["financial_models"] = []
+    param["threshold"] = 0.0002
+    param["stock"] = stock
+    for ws in params["window_sizes"]:
+        param["window_size"] = ws
+        for mof in params["market_order_features"]:
+            param["market_order_features"] = [mof]
+            create_train_data(param, data)
 
+    for fm in params["financial_models"]:
+        param["financial_models"] = [fm]
+        param["window_size"] = 0
+        param["market_order_features"] = []
+        create_train_data(param, data)
 
-# Fill create start queue with all start
-
-
-
-
-# input - filepath for input data CSV file
-# output - file name to save train data in
-# returns string with path to file
-#def create_train_data_file(input, parameters):
+print("Done")
