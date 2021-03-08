@@ -37,12 +37,12 @@ class DataProcessor:
     def get_financial_models(self):
         data = []
         if(self.useEMA):
-            data.append(self.processed["ema12"])
-            data.append(self.processed["ema26"])
+            data.append('%.4f' % self.processed["ema12"])
+            data.append('%.4f' % self.processed["ema26"])
         if(self.useRSI):
-            data.append(self.processed["rsi"])
+            data.append('%.4f' % self.processed["rsi"])
         if(self.useMACD):
-            data.append(self.processed["macd"])
+            data.append('%.4f' % self.processed["macd"])
         return data
 
     def update_ema(self, mo):
