@@ -11,19 +11,42 @@ import decimal
 import sys
 import os
 
-def build_input_row(stock, data_processors, time):
+def build_input_row(stock, data_processors, time, normalize):
     stack = []
+    min_max_tuple = None
     #for stock in stocks:
     market_orders = np.array((data_processors[stock].get_window())).ravel()
     if(len(market_orders)>0):
+        if normalize:
+            market_orders, min_max_tuple = normalize_array(market_orders)
         stack.extend(market_orders)
+        
 
     #for stock in stocks:
     financial_models = list(data_processors[stock].get_financial_models())
     if(len(financial_models)>0):
         stack.extend(financial_models)
     stack.append(int(time))
-    return stack
+    return stack, min_max_tuple
+    
+    
+def to_norm(x, min_x, max_x):
+    max_x = max_x#* 1.10
+    min_x = min_x#* 0.9
+    return round((x-min_x)/(max_x-min_x+0.0001),4)
+    
+def from_norm(x, min_x, max_x):
+    max_x = max_x#/ 1.10
+    min_x = min_x#/ 0.9
+    return round(x*(max_x-min_x+0.0001)+min_x,4)
+    
+def normalize_array(array):
+    max_x = array.max() #* 1.10
+    min_x = array.min() #* 0.9
+    
+    f = lambda x: np.around((x-min_x)/(max_x-min_x+0.0001),4)
+  
+    return f(array), (min_x, max_x)
 
 def is_market_open(time):
     dt = datetime.fromtimestamp(time)
@@ -89,7 +112,9 @@ def generate_y_name(params):
     name += ".csv"
     return name
 
-def create_y_data(time_price_map, start_time, end_time, params):
+def create_y_data(time_price_map, start_time, end_time, params, min_max_map):
+    normalize = params["normalize"]
+
     print("Creating y data...")
     print("Map size: " + str(len(time_price_map)))
     current_time = int(start_time)
@@ -100,16 +125,28 @@ def create_y_data(time_price_map, start_time, end_time, params):
 
     with file:
         write = csv.writer(file, delimiter=';')
-        write.writerow(["15s", "15ud", "30s", "30ud", "60s", "60ud", "300s", "300ud", "600s", "600ud", "ts"]) #TODO
+        rows_head = ["15s", "15ud", "30s", "30ud", "60s", "60ud", "300s", "300ud", "600s", "600ud", "ts"]
+        if normalize:
+            rows_head.insert(-1, "min")
+            rows_head.insert(-1, "max", )
+        write.writerow(rows_head) #TODO
         print("Looping price map ...")
         while current_time + time_jumps[-1] <= end_time:
             row = []
             if current_time in time_price_map:
                 cur_price = time_price_map[current_time]
+                
             for jump in time_jumps:
                 t = current_time + jump
                 if t in time_price_map:
                     fut_price = time_price_map[t]
+                    if normalize:
+                        mini, maxi = min_max_map[t]
+                        fut_price = from_norm(fut_price, mini, maxi) #Unnormalize
+                        #print("Unnormalized price y "+ str(fut_price))
+                        mini, maxi = min_max_map[current_time]
+                        fut_price = to_norm(fut_price, mini, maxi) #Normalize with the min and max from cur_time
+                        #print("Normalized price y with x min,max "+ str(fut_price))
                     row.append(fut_price)
                     row.append(get_up_down_target(cur_price, fut_price, params["threshold"]))
                 else:
@@ -118,6 +155,9 @@ def create_y_data(time_price_map, start_time, end_time, params):
             if current_time == -1:
                 return
             elif len(row) == 2*len(time_jumps):
+                mini, maxi = min_max_map[current_time]
+                row.append(mini)
+                row.append(maxi)
                 row.append(int(current_time))
                 write.writerow(row)
                 current_time += 1
@@ -131,12 +171,10 @@ def end_trade_day(write, data_processors, day):
     write.writerows(day)
 
 
-
-
-
 def create_train_data(params, _data):
     start = timer()
     stock = params["stock"]
+    normalize = params["normalize"]
     print("Calculating for: " + stock)
     filter = _data["stock"] == stock
     #for stock in params["stocks"]:
@@ -157,6 +195,7 @@ def create_train_data(params, _data):
     market_orders = gen_rows(data)
 
     time_price_map = {}
+    min_max_map = {}
 
     dir_path = stock + "/"
     if not os.path.exists(dir_path):
@@ -178,11 +217,13 @@ def create_train_data(params, _data):
                         end_trade_day(write, data_processors, day)
                         day = []
                     elif data_processors[stock].is_window_filled():
-                        row = build_input_row(stock, data_processors, time)
+                        row, min_max_tuple = build_input_row(stock, data_processors, time, normalize)
                         day.append(row)
                         end_time = row[-1]
-                        if params["window_size"] != 0:
+                        if params["window_size"] != 0:   
                             time_price_map[time] = row[-2] #TODO NOT HARDCODE
+                            if min_max_tuple!=None:
+                                min_max_map[time] = min_max_tuple
                         time += 1
                     else:
                         time += 1
@@ -190,29 +231,31 @@ def create_train_data(params, _data):
         print(time)
         end_trade_day(write, data_processors, day)
     if params["window_size"] != 0:
-        create_y_data(time_price_map, start_time, end_time, params)
+        create_y_data(time_price_map, start_time, end_time, params, min_max_map)
 
     end = timer()
     print("Time: "+str(end-start)+"s")
 
 
 params = {
-    "stocks" : ["Swedbank_A", "SEB_A"],
-    "window_sizes" : [1, 10],
-    "financial_models" : ["rsi", "macd"],
+    "stocks" : ["Swedbank_A"],
+    "window_sizes" : [500],
+    "financial_models" : [],
     "market_order_features" : ["price"],
-    "threshold" : 0.0002
+    "threshold" : 0.0002,
+    "normalize" : True
 }
 
 datafile = sys.argv[1]
 print("Reading csv: " + datafile)
-data = pd.read_csv(datafile, sep=";")
+data = pd.read_csv(datafile, sep=";", usecols=["price", "stock", "publication_time"])
 
 for stock in params["stocks"]:
     param = {}
     param["financial_models"] = []
     param["threshold"] = 0.0002
     param["stock"] = stock
+    param["normalize"] = params["normalize"]
     for ws in params["window_sizes"]:
         param["window_size"] = ws
         for mof in params["market_order_features"]:
