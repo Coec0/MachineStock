@@ -20,7 +20,7 @@ def build_input_row(stock, data_processors, time, normalize):
         if normalize:
             market_orders, min_max_tuple = normalize_array(market_orders)
         stack.extend(market_orders)
-        
+
 
     #for stock in stocks:
     financial_models = list(data_processors[stock].get_financial_models())
@@ -28,24 +28,24 @@ def build_input_row(stock, data_processors, time, normalize):
         stack.extend(financial_models)
     stack.append(int(time))
     return stack, min_max_tuple
-    
-    
+
+
 def to_norm(x, min_x, max_x):
     max_x = max_x#* 1.10
     min_x = min_x#* 0.9
     return round((x-min_x)/(max_x-min_x+0.0001),4)
-    
+
 def from_norm(x, min_x, max_x):
     max_x = max_x#/ 1.10
     min_x = min_x#/ 0.9
     return round(x*(max_x-min_x+0.0001)+min_x,4)
-    
+
 def normalize_array(array):
     max_x = array.max() #* 1.10
     min_x = array.min() #* 0.9
-    
+
     f = lambda x: np.around((x-min_x)/(max_x-min_x+0.0001),4)
-  
+
     return f(array), (min_x, max_x)
 
 def is_market_open(time):
@@ -135,7 +135,7 @@ def create_y_data(time_price_map, start_time, end_time, params, min_max_map):
             row = []
             if current_time in time_price_map:
                 cur_price = time_price_map[current_time]
-                
+
             for jump in time_jumps:
                 t = current_time + jump
                 if t in time_price_map:
@@ -220,7 +220,7 @@ def create_train_data(params, _data):
                         row, min_max_tuple = build_input_row(stock, data_processors, time, normalize)
                         day.append(row)
                         end_time = row[-1]
-                        if params["window_size"] != 0:   
+                        if params["window_size"] != 0:
                             time_price_map[time] = row[-2] #TODO NOT HARDCODE
                             if min_max_tuple!=None:
                                 min_max_map[time] = min_max_tuple
@@ -239,11 +239,11 @@ def create_train_data(params, _data):
 
 params = {
     "stocks" : ["Swedbank_A"],
-    "window_sizes" : [500],
-    "financial_models" : [],
-    "market_order_features" : ["price"],
+    "window_sizes" : [0],
+    "financial_models" : ["volatility"],
+    "market_order_features" : [],
     "threshold" : 0.0002,
-    "normalize" : True
+    "normalize" : False
 }
 
 datafile = sys.argv[1]

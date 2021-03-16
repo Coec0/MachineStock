@@ -3,12 +3,14 @@ from collections import deque
 from datetime import datetime
 from datetime import timedelta
 from timeit import default_timer as timer
+import math
 
 class DataProcessor:
     def __init__(self, stock, params): #["price, volume, --mnt--p, publicationtime"]
         self.useEMA = "ema" in params["financial_models"]
         self.useRSI = "rsi" in params["financial_models"]
         self.useMACD = "macd" in params["financial_models"]
+        self.useVolatility = "volatility" in params["financial_models"]
         self.usePrice = "price" in params["market_order_features"]
         self.useVol = "volume" in params["market_order_features"]
         self.stock = stock
@@ -21,11 +23,16 @@ class DataProcessor:
         self.ema = {"window26" : deque(maxlen=26),
                     "beta": 0.98,
                     "seg_start": -1}
+        self.volatility = {"window" : deque(maxlen=50),
+                           "window_size":50,
+                           "mean" : 0,
+                           "varsum":0}
         self.processed = {"window" : deque(maxlen=self.window_size),
                           "rsi" : 0,
                           "ema12":0,
                           "ema26":0,
-                          "macd" :0}
+                          "macd" :0,
+                          "volatility": 0}
 
     def gen_rows(self, df):
         for row in df.itertuples(index=False):
@@ -44,6 +51,26 @@ class DataProcessor:
         if(self.useMACD):
             data.append('%.4f' % self.processed["macd"])
         return data
+
+    def update_volatility(self, mo):
+        new_x = mo["price"]
+        window_size = self.volatility["window_size"]
+        varsum = self.volatility["varsum"]
+
+        if(len(self.volatility["window"])==0):
+            old_x = mo["price"]+0.00001
+            old_mean = old_x
+        else:
+            old_x = self.volatility["window"][0]
+            old_mean = self.volatility["mean"]
+
+        new_mean = old_mean + ((new_x - old_x)/window_size)
+        varsum = varsum + (new_x-old_mean)*(new_x-new_mean)-((old_x-old_mean)*(old_x-new_mean))
+
+        self.volatility["window"].append(new_x)
+        self.processed["volatility"] = math.sqrt(varsum/window_size)
+        self.volatility["mean"] = new_mean
+        self.volatility["varsum"] = varsum
 
     def update_ema(self, mo):
         if(self.ema["seg_start"] == -1):
@@ -124,6 +151,9 @@ class DataProcessor:
 
         if(self.useMACD):
             self.processed["macd"] = self.processed["ema12"] - self.processed["ema26"]
+
+        if(self.useVolatility):
+            self.update_volatility(market_order)
 
     # df - pandas dataframe sorted by publication_time
     def process_start_window(self, df):
