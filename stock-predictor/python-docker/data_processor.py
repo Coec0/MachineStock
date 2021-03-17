@@ -50,6 +50,8 @@ class DataProcessor:
             data.append('%.4f' % self.processed["rsi"])
         if(self.useMACD):
             data.append('%.4f' % self.processed["macd"])
+        if(self.useVolatility):
+            data.append('%.6f' % self.processed["volatility"])
         return data
 
     def update_volatility(self, mo):
@@ -65,10 +67,12 @@ class DataProcessor:
             old_mean = self.volatility["mean"]
 
         new_mean = old_mean + ((new_x - old_x)/window_size)
-        varsum = varsum + (new_x-old_mean)*(new_x-new_mean)-((old_x-old_mean)*(old_x-new_mean))
+        #varsum = varsum + (new_x-old_mean)*(new_x-new_mean)-((old_x-old_mean)*(old_x-new_mean))
+        varsum = varsum + (new_x + old_x - old_mean - new_mean) * (new_x-old_x)
+        varsum = max(0, varsum)
 
         self.volatility["window"].append(new_x)
-        self.processed["volatility"] = math.sqrt(varsum/window_size)
+        self.processed["volatility"] = math.sqrt(varsum/(window_size-1))
         self.volatility["mean"] = new_mean
         self.volatility["varsum"] = varsum
 

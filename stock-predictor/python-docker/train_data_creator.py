@@ -155,9 +155,10 @@ def create_y_data(time_price_map, start_time, end_time, params, min_max_map):
             if current_time == -1:
                 return
             elif len(row) == 2*len(time_jumps):
-                mini, maxi = min_max_map[current_time]
-                row.append(mini)
-                row.append(maxi)
+                if normalize:
+                    mini, maxi = min_max_map[current_time]
+                    row.append(mini)
+                    row.append(maxi)
                 row.append(int(current_time))
                 write.writerow(row)
                 current_time += 1
@@ -239,9 +240,9 @@ def create_train_data(params, _data):
 
 params = {
     "stocks" : ["Swedbank_A"],
-    "window_sizes" : [0],
+    "window_sizes" : [200],
     "financial_models" : ["volatility"],
-    "market_order_features" : [],
+    "market_order_features" : ["price"],
     "threshold" : 0.0002,
     "normalize" : False
 }
@@ -262,10 +263,10 @@ for stock in params["stocks"]:
             param["market_order_features"] = [mof]
             create_train_data(param, data)
 
-    for fm in params["financial_models"]:
-        param["financial_models"] = [fm]
-        param["window_size"] = 0
-        param["market_order_features"] = []
-        create_train_data(param, data)
+    #for fm in params["financial_models"]:
+    #    param["financial_models"] = [fm]
+    #    param["window_size"] = 0
+    #    param["market_order_features"] = []
+    #    create_train_data(param, data)
 
 print("Done")
