@@ -3,10 +3,12 @@ from collections import deque
 from datetime import datetime
 from datetime import timedelta
 from timeit import default_timer as timer
+from price_channels import PriceChannels
 import math
 
 class DataProcessor:
     def __init__(self, stock, params): #["price, volume, --mnt--p, publicationtime"]
+        self.useChannels = "channels" in params["financial_models"]
         self.useEMA = "ema" in params["financial_models"]
         self.useRSI = "rsi" in params["financial_models"]
         self.useMACD = "macd" in params["financial_models"]
@@ -16,6 +18,7 @@ class DataProcessor:
         self.stock = stock
         self.params = params
         self.window_size = params["window_size"]
+        self.channels = PriceChannels(120, 10, params["normalize"])
         self.rsi = {"window" : deque(maxlen=14),
                     "open": 0,
                     "latest": 0,
@@ -52,6 +55,9 @@ class DataProcessor:
             data.append('%.4f' % self.processed["macd"])
         if(self.useVolatility):
             data.append('%.6f' % self.processed["volatility"])
+        if(self.useChannels):
+            data.append('%.4f' % self.channels.get_min_max_k())
+            data.append('%.4f' % self.get_relativity_in_price_channel())
         return data
 
     def update_volatility(self, mo):
@@ -158,6 +164,9 @@ class DataProcessor:
 
         if(self.useVolatility):
             self.update_volatility(market_order)
+        
+        if(self.useChannels):
+            self.channels.update(market_order)
 
     # df - pandas dataframe sorted by publication_time
     def process_start_window(self, df):

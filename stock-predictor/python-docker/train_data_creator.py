@@ -240,8 +240,8 @@ def create_train_data(params, _data):
 
 params = {
     "stocks" : ["Swedbank_A"],
-    "window_sizes" : [200],
-    "financial_models" : ["volatility"],
+    "window_sizes" : [1],
+    "financial_models" : ["channels"],
     "market_order_features" : ["price"],
     "threshold" : 0.0002,
     "normalize" : False
@@ -263,10 +263,10 @@ for stock in params["stocks"]:
             param["market_order_features"] = [mof]
             create_train_data(param, data)
 
-    #for fm in params["financial_models"]:
-    #    param["financial_models"] = [fm]
-    #    param["window_size"] = 0
-    #    param["market_order_features"] = []
-    #    create_train_data(param, data)
+    for fm in params["financial_models"]:
+        param["financial_models"] = [fm]
+        param["window_size"] = 0
+        param["market_order_features"] = []
+        create_train_data(param, data)
 
 print("Done")
