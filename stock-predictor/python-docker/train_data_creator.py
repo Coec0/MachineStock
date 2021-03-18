@@ -93,6 +93,9 @@ def find_next_time(time_price_map, from_time, end_time):
             return -1
 
 def get_up_down_target(cur_price, fut_price, threshold):
+    threshold = float(threshold)
+    cur_price = float(cur_price)
+    fut_price = float(fut_price)
     delta = threshold*cur_price
     if(fut_price <= cur_price+delta and fut_price >= cur_price-delta):
         return 1
@@ -107,9 +110,13 @@ def generate_x_name(params):
         name += str(params["window_size"]) + "_"
         for mof in params["market_order_features"]:
             name += mof[0]
+        for fm in params["financial_models"]:
+            name+= "_" + fm
     else:
         fm = params["financial_models"][0]
         name += fm
+    if params["normalize"]:
+        name += "_normalized"
     name += ".csv"
     return name
 
@@ -117,12 +124,14 @@ def generate_y_name(params):
     name = "y_" + params["stock"] + "_"
     if(params["window_size"] > 0):
         name += str(params["window_size"])
+    if params["normalize"]:
+        name += "_normalized"
     name += ".csv"
     return name
 
 def create_y_data(time_price_map, start_time, end_time, params, min_max_map):
     normalize = params["normalize"]
-
+    print("Normalize: " + str(normalize))
     print("Creating y data...")
     print("Map size: " + str(len(time_price_map)))
     current_time = int(start_time)
@@ -150,6 +159,7 @@ def create_y_data(time_price_map, start_time, end_time, params, min_max_map):
                     fut_price = time_price_map[t]
                     if normalize:
                         mini, maxi = min_max_map[t]
+                        fut_price = float(fut_price)
                         fut_price = from_norm(fut_price, mini, maxi) #Unnormalize
                         #print("Unnormalized price y "+ str(fut_price))
                         mini, maxi = min_max_map[current_time]
@@ -230,7 +240,7 @@ def create_train_data(params, _data):
                         day.append(row)
                         end_time = row[-1]
                         if params["window_size"] != 0:
-                            time_price_map[time] = row[-2] #TODO NOT HARDCODE
+                            time_price_map[time] = row[-(len(params["financial_models"])+2)] #TODO NOT HARDCODE
                             if min_max_tuple!=None:
                                 min_max_map[time] = min_max_tuple
                         time += 1
@@ -247,9 +257,9 @@ def create_train_data(params, _data):
 
 
 params = {
-    "stocks" : ["Swedbank_A"],
-    "window_sizes" : [1],
-    "financial_models" : ["channels"],
+    "stocks" : ["SEB_A", "Nordea_Bank_Abp"],
+    "window_sizes" : [200],
+    "financial_models" : ["volatility"],
     "market_order_features" : ["price"],
     "threshold" : 0.0002,
     "normalize" : False
@@ -271,10 +281,10 @@ for stock in params["stocks"]:
             param["market_order_features"] = [mof]
             create_train_data(param, data)
 
-    for fm in params["financial_models"]:
-        param["financial_models"] = [fm]
-        param["window_size"] = 0
-        param["market_order_features"] = []
-        create_train_data(param, data)
+    #for fm in params["financial_models"]:
+    #    param["financial_models"] = [fm]
+    #    param["window_size"] = 0
+    #    param["market_order_features"] = []
+    #    create_train_data(param, data)
 
 print("Done")
