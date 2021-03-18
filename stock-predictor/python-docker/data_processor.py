@@ -56,8 +56,10 @@ class DataProcessor:
         if(self.useVolatility):
             data.append('%.6f' % self.processed["volatility"])
         if(self.useChannels):
-            data.append('%.4f' % self.channels.get_min_max_k())
-            data.append('%.4f' % self.get_relativity_in_price_channel())
+            min_k, max_k = self.channels.get_min_max_k()
+            data.append('%.4f' % min_k)
+            data.append('%.4f' % max_k)
+            data.append('%.4f' % self.channels.get_relativity_in_price_channel())
         return data
 
     def update_volatility(self, mo):

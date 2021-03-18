@@ -64,7 +64,15 @@ def get_column_names(stock, params):
         for feature in params["market_order_features"]:
             cols.append(stock+"-"+feature+"-"+str(i))
     for model in params["financial_models"]:
-        cols.append(stock+model)
+        if model == "ema":
+            cols.append(stock+"-ema12")
+            cols.append(stock+"-ema26")
+        elif model == "channels":
+            cols.append(stock+"-min_k")
+            cols.append(stock+"-max_k")
+            cols.append(stock+"-price_channel_pos")
+        else:
+            cols.append(stock+model)
     cols.append("ts")
     return cols
 
