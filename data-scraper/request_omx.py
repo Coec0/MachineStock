@@ -18,12 +18,14 @@ class RequestOMX:
         response = self.request_marketorders(stock_id, f_date, t_date)
         self.print_response_message(response, stock_id)
         timelimit = 600 - response.elapsed_time
+        retries = 20
 
-        while timelimit > 0 and (response.status_code != 200 or len(response.content)//1000 == 0):
+        while (timelimit > 0 and retries > 0) and (response.status_code != 200 or len(response.content)//1000 == 0):
             self.change_cookie_id()
             response = self.request_marketorders(stock_id, f_date, t_date)
             self.print_response_message(response, stock_id)
             timelimit = timelimit - response.elapsed_time
+            retries -= 1
 
         if(timelimit <= 0):
             print("Timeout ("+stock_id+")")
