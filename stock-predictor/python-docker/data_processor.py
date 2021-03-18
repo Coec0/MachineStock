@@ -109,8 +109,9 @@ class DataProcessor:
             self.rsi["seg_start"] = mo["publication_time"]
         if(mo["publication_time"] > self.rsi["seg_start"]+5*60):
             diff = self.rsi["open"] - self.rsi["latest"]
-            self.rsi["window"].append(diff)
-            self.rsi["seg_start"] = self.rsi["seg_start"]+5*60
+            while(mo["publication_time"] > self.rsi["seg_start"]+5*60):
+                self.rsi["window"].append(diff)
+                self.rsi["seg_start"] = self.rsi["seg_start"]+5*60
             self.rsi["open"] = mo["price"]
             self.processed["rsi"] = self.calc_rsi()
         self.rsi["latest"] = mo["price"]
@@ -164,7 +165,7 @@ class DataProcessor:
 
         if(self.useVolatility):
             self.update_volatility(market_order)
-        
+
         if(self.useChannels):
             self.channels.update(market_order)
 
