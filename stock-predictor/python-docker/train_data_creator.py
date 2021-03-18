@@ -70,7 +70,8 @@ def get_column_names(stock, params):
         elif model == "channels":
             cols.append(stock+"-min_k")
             cols.append(stock+"-max_k")
-            cols.append(stock+"-price_channel_pos")
+            cols.append(stock + "-min_y")
+            cols.append(stock + "-max_y")
         else:
             cols.append(stock+model)
     cols.append("ts")
@@ -257,9 +258,9 @@ def create_train_data(params, _data):
 
 
 params = {
-    "stocks" : ["SEB_A", "Nordea_Bank_Abp"],
-    "window_sizes" : [200],
-    "financial_models" : ["volatility"],
+    "stocks" : ["Swedbank_A"],
+    "window_sizes" : [1],
+    "financial_models" : ["channels"],
     "market_order_features" : ["price"],
     "threshold" : 0.0002,
     "normalize" : False
@@ -271,7 +272,7 @@ data = pd.read_csv(datafile, sep=";", usecols=["price", "stock", "publication_ti
 
 for stock in params["stocks"]:
     param = {}
-    param["financial_models"] = []
+    param["financial_models"] = ["channels"]
     param["threshold"] = 0.0002
     param["stock"] = stock
     param["normalize"] = params["normalize"]

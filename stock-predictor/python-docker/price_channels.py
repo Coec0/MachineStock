@@ -36,15 +36,16 @@ class PriceChannels:
             return math.atan(self.max_line[0])/(math.pi/2), math.atan(self.min_line[0])/(math.pi/2)
         return self.min_line[0], self.max_line[0]
 
-    def get_relativity_in_price_channel(self):
-        latest_order = self.orders[-1]["price"]
+    def get_price_channel_min_max(self):
+        #latest_order = self.orders[-1]["price"]
         y_max = self.__calc_y(self.max_line[0], self.time_window, self.max_line[1])
         y_min = self.__calc_y(self.min_line[0], self.time_window, self.min_line[1])
 
-        if y_max-y_min == 0:
-            return 0.5
+        return y_min, y_max
+        #if y_max-y_min == 0:
+        #    return 0.5
 
-        return (latest_order-y_min)/(y_max-y_min)
+        #return (latest_order-y_min)/(y_max-y_min)
 
     def __calc_y(self, k, x, m):
         return k*x+m

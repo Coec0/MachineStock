@@ -18,7 +18,7 @@ class DataProcessor:
         self.stock = stock
         self.params = params
         self.window_size = params["window_size"]
-        self.channels = PriceChannels(120, 10, params["normalize"])
+        self.channels = PriceChannels(7200, 10, params["normalize"])
         self.rsi = {"window" : deque(maxlen=14),
                     "open": 0,
                     "latest": 0,
@@ -57,9 +57,11 @@ class DataProcessor:
             data.append('%.6f' % self.processed["volatility"])
         if(self.useChannels):
             min_k, max_k = self.channels.get_min_max_k()
+            min_y, max_y = self.channels.get_price_channel_min_max()
             data.append('%.4f' % min_k)
             data.append('%.4f' % max_k)
-            data.append('%.4f' % self.channels.get_relativity_in_price_channel())
+            data.append('%.4f' % min_y)
+            data.append('%.4f' % max_y)
         return data
 
     def update_volatility(self, mo):
