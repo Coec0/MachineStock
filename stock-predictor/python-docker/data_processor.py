@@ -18,7 +18,7 @@ class DataProcessor:
         self.stock = stock
         self.params = params
         self.window_size = params["window_size"]
-        self.channels = PriceChannels(7200, 10, params["normalize"])
+        self.channels = [PriceChannels(1200, 10, params["normalize"]), PriceChannels(7200, 10, params["normalize"])]
         self.rsi = {"window" : deque(maxlen=14),
                     "open": 0,
                     "latest": 0,
@@ -56,12 +56,13 @@ class DataProcessor:
         if(self.useVolatility):
             data.append('%.6f' % self.processed["volatility"])
         if(self.useChannels):
-            min_k, max_k = self.channels.get_min_max_k()
-            min_y, max_y = self.channels.get_price_channel_min_max()
-            data.append('%.4f' % min_k)
-            data.append('%.4f' % max_k)
-            data.append('%.4f' % min_y)
-            data.append('%.4f' % max_y)
+            for channel in self.channels:
+                min_k, max_k = channel.get_min_max_k()
+                min_y, max_y = channel.get_price_channel_min_max()
+                data.append('%.4f' % min_k)
+                data.append('%.4f' % max_k)
+                data.append('%.4f' % min_y)
+                data.append('%.4f' % max_y)
         return data
 
     def update_volatility(self, mo):
@@ -171,7 +172,8 @@ class DataProcessor:
             self.update_volatility(market_order)
 
         if(self.useChannels):
-            self.channels.update(market_order)
+            for channel in self.channels:
+                channel.update(market_order)
 
     # df - pandas dataframe sorted by publication_time
     def process_start_window(self, df):

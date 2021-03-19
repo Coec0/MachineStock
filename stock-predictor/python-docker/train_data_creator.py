@@ -58,7 +58,7 @@ def gen_rows(df):
     for row in df.itertuples(index=False):
         yield row._asdict()
 
-def get_column_names(stock, params):
+def get_column_names(stock, params, dp):
     cols = []
     for i in range(params["window_size"]):
         for feature in params["market_order_features"]:
@@ -68,10 +68,12 @@ def get_column_names(stock, params):
             cols.append(stock+"-ema12")
             cols.append(stock+"-ema26")
         elif model == "channels":
-            cols.append(stock+"-min_k")
-            cols.append(stock+"-max_k")
-            cols.append(stock + "-min_y")
-            cols.append(stock + "-max_y")
+            for channel in dp.channels:
+                time = channel.time_window
+                cols.append(stock+"-min_k_"+str(time))
+                cols.append(stock+"-max_k"+str(time))
+                cols.append(stock + "-min_y"+str(time))
+                cols.append(stock + "-max_y"+str(time))
         else:
             cols.append(stock+model)
     cols.append("ts")
@@ -227,7 +229,7 @@ def create_train_data(params, _data):
     day = []
     with file:
         write = csv.writer(file, delimiter=';')
-        write.writerow(get_column_names(stock, params))
+        write.writerow(get_column_names(stock, params, dp))
         print("Processing market orders ...")
         for market_order in market_orders:
             if(market_order["publication_time"] > time):
