@@ -65,13 +65,16 @@ class PriceChannels:
                 max_value1_point = (count, order["price"])
             if count > self.section: #Loop until one section has been reached
                 break
+            if count > len(self.orders)-1:  # Never use latest market order
+                break
 
         max_value2_point = (0,0) #Time, Price
         for count, order in enumerate(reversed(self.orders)):
-            if order["price"] > max_value2_point[1]:
-                max_value2_point = (len(self.orders) - count, order["price"])
-            if count > self.section: #Loop until one section has been reached
-                break
+            if len(self.orders) == 0 or count != 0:  # Don't include latest market order
+                if order["price"] > max_value2_point[1]:
+                    max_value2_point = (len(self.orders) - count, order["price"])
+                if count+1 > self.section: #Loop until one section has been reached
+                    break
 
         return max_value1_point, max_value2_point
 
@@ -82,13 +85,16 @@ class PriceChannels:
                 min_value1_point = (count, order["price"])
             if count > self.section: #Loop until one section has been reached
                 break
+            if count > len(self.orders) - 1:  # Never use latest market order
+                break
 
         min_value2_point = (0, 10000000) #Time, price
         for count, order in enumerate(reversed(self.orders)):
-            if order["price"] < min_value2_point[1]:
-                min_value2_point = (len(self.orders) - count, order["price"])
-            if count > self.section: #Loop until one section has been reached
-                break
+            if len(self.orders) == 0 or count != 0:  # Don't include latest market order
+                if order["price"] < min_value2_point[1]:
+                    min_value2_point = (len(self.orders) - count, order["price"])
+                if count+1 > self.section: #Loop until one section has been reached
+                    break
 
         return min_value1_point, min_value2_point
 
