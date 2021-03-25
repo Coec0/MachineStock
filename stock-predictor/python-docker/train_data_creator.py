@@ -138,14 +138,14 @@ def create_y_data(time_price_map, start_time, end_time, params, min_max_map):
     print("Creating y data...")
     print("Map size: " + str(len(time_price_map)))
     current_time = int(start_time)
-    time_jumps = [15, 30, 60, 300, 600]
+    time_jumps = [5, 15, 30, 60]
     dir_path = params["stock"] + "/"
     name = generate_y_name(params)
     file = open(dir_path+name, 'w+', newline ='')
 
     with file:
         write = csv.writer(file, delimiter=';')
-        rows_head = ["15s", "15ud", "30s", "30ud", "60s", "60ud", "300s", "300ud", "600s", "600ud", "ts"]
+        rows_head = ["5s", "5ud", "15s", "15ud", "30s", "30ud", "60s", "60ud", "ts"]
         if normalize:
             rows_head.insert(-1, "min")
             rows_head.insert(-1, "max", )
@@ -187,7 +187,7 @@ def create_y_data(time_price_map, start_time, end_time, params, min_max_map):
 
 def end_trade_day(write, data_processors, day):
     clear_data_processors(data_processors)
-    pop_amount = min(len(day), 600)
+    pop_amount = min(len(day), 60)
     for i in range(pop_amount):
         day.pop()
     write.writerows(day)
@@ -243,7 +243,7 @@ def create_train_data(params, _data):
                         day.append(row)
                         end_time = row[-1]
                         if params["window_size"] != 0:
-                            time_price_map[time] = row[-(len(params["financial_models"])+2)] #TODO NOT HARDCODE
+                            time_price_map[time] = row[params["window_size"]-1]
                             if min_max_tuple!=None:
                                 min_max_map[time] = min_max_tuple
                         time += 1
@@ -261,7 +261,7 @@ def create_train_data(params, _data):
 
 params = {
     "stocks" : ["Swedbank_A"],
-    "window_sizes" : [1],
+    "window_sizes" : [70, 200, 700],
     "financial_models" : ["channels"],
     "market_order_features" : ["price"],
     "threshold" : 0.0002,
@@ -274,7 +274,7 @@ data = pd.read_csv(datafile, sep=";", usecols=["price", "stock", "publication_ti
 
 for stock in params["stocks"]:
     param = {}
-    param["financial_models"] = ["channels"]
+    param["financial_models"] = ["ema", "rsi", "macd", "volatility", "channels"]
     param["threshold"] = 0.0002
     param["stock"] = stock
     param["normalize"] = params["normalize"]
