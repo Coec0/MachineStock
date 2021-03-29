@@ -229,7 +229,7 @@ def create_train_data(params, _data):
     file = open(dir_path+name, 'w+', newline ='')
     end_time = 0
     day = []
-    current_second = 0
+    current_second = 1
     with file:
         write = csv.writer(file, delimiter=';')
         write.writerow(get_column_names(stock, params, dp))
@@ -241,7 +241,7 @@ def create_train_data(params, _data):
                         time = market_order["publication_time"]
                         end_trade_day(write, data_processors, day)
                         day = []
-                        current_second = 0
+                        current_second = 1
                     elif data_processors[stock].is_window_filled():
                         row, min_max_tuple = build_input_row(stock, data_processors, time, current_second, normalize)
                         day.append(row)
@@ -268,7 +268,7 @@ def create_train_data(params, _data):
 
 params = {
     "stocks" : ["Swedbank_A"],
-    "window_sizes" : [70, 200, 700],
+    "window_sizes" : [1],
     "financial_models" : ["channels"],
     "market_order_features" : ["price"],
     "threshold" : 0.0002,
@@ -281,7 +281,7 @@ data = pd.read_csv(datafile, sep=";", usecols=["price", "stock", "publication_ti
 
 for stock in params["stocks"]:
     param = {}
-    param["financial_models"] = ["ema", "rsi", "macd", "volatility", "channels"]
+    param["financial_models"] = []
     param["threshold"] = 0.0002
     param["stock"] = stock
     param["normalize"] = params["normalize"]
