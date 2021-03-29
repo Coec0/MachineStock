@@ -125,6 +125,10 @@ def generate_x_name(params):
         name += fm
     if params["normalize"]:
         name += "_normalized"
+
+    #TODODODODODODOD#
+    name += "_time"
+
     name += ".csv"
     return name
 
