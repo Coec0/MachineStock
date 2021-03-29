@@ -268,7 +268,7 @@ def create_train_data(params, _data):
 
 params = {
     "stocks" : ["Swedbank_A"],
-    "window_sizes" : [1],
+    "window_sizes" : [70, 200, 700],
     "financial_models" : ["channels"],
     "market_order_features" : ["price"],
     "threshold" : 0.0002,
@@ -281,7 +281,7 @@ data = pd.read_csv(datafile, sep=";", usecols=["price", "stock", "publication_ti
 
 for stock in params["stocks"]:
     param = {}
-    param["financial_models"] = []
+    param["financial_models"] = ["ema", "rsi", "macd", "volatility", "channels"]
     param["threshold"] = 0.0002
     param["stock"] = stock
     param["normalize"] = params["normalize"]
