@@ -164,7 +164,7 @@ class DataProcessor:
         if len(self.processed["window_time"]) == 0:
             dt = datetime.fromtimestamp(market_order["publication_time"])
             stamp = datetime(dt.year, dt.month, dt.day, 9, 0).timestamp()
-            self.timestamp_start_of_day = stamp
+            self.timestamp_start_of_day = int(stamp)
         self.processed["window_time"].append(market_order["publication_time"] - self.timestamp_start_of_day)
 
         if(self.useEMA or self.useMACD):

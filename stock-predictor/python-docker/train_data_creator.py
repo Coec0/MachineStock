@@ -15,7 +15,9 @@ def build_input_row(stock, data_processors, time, normalize):
     stack = []
     min_max_tuple = None
     #for stock in stocks:
-    market_orders, market_times = np.array((data_processors[stock].get_window())).ravel()
+    market_orders, market_times = data_processors[stock].get_window()
+    market_orders = np.array(market_orders).ravel()
+    market_times = np.array(market_times).ravel()
     if(len(market_orders)>0):
         if normalize:
             market_orders, min_max_tuple = normalize_array(market_orders)
