@@ -3,6 +3,7 @@ from torch import nn
 from torch import optim
 import itertools
 import os
+import pandas as pd
 
 # replace % for number
 file_x_const = "Swedbank_A/x_Swedbank_A_%_p_ema_rsi_macd_volatility_channels.csv"
@@ -17,8 +18,11 @@ cols_y = [("5s", 0), ("15s", 2), ("30s", 4), ("60s", 6)]
 epochs = [5, 50]
 batch_sizes = [512]
 learning_rates = [0.01, 0.001, 0.0001]
+useTime = False
 
 iterator = itertools.product(models, epochs, batch_sizes, window_sizes, fin_inds, learning_rates, cols_y)
+
+resultframe = pd.DataFrame(columns = ["stock", "avg-train-loss", "avg-val-loss", "avg-test-loss", "val-r2", "test-r2", "epochs", "learning-rate", "x-col", "y-col", "window-size", "batch-size", "use-time"])
 
 for params in iterator:
     print(params)
@@ -56,4 +60,10 @@ for params in iterator:
     filepath = "Swedbank_A/"+str(ws)+"/"+foldername+"/"
     if not os.path.exists(filepath):
         os.makedirs(filepath)
-        trainbase.train(files_x, files_y, model, input_size, ws, loss_fn, optimizer, filepath, epoch, batch_size, cols_x, col_y)
+        result = trainbase.train(files_x, files_y, model, input_size, ws, loss_fn, optimizer, filepath, epoch, batch_size, cols_x, col_y)
+        train_loss, val_loss, test_loss, val_r2, test_r2 = result
+        row = ["Swedbank_A", train_loss, val_loss, test_loss, val_r2, test_r2, epoch, lr, fin_ind, col_y_name, ws, batch_size, int(useTime)]
+        resultframe.loc[len(resultframe)] = row
+
+resultframe.to_csv("Swedbank_A/Swedbank_A.csv", index=False)
+print("Done")

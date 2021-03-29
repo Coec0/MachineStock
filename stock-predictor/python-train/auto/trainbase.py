@@ -112,6 +112,9 @@ def evaluate_model(data, model, loss_fn):
 
 def train_model(model, train_data_loader, dev_data_loader, loss_fn, optimizer, epochrange, batchsize, filepath):
     log_file = io.open(filepath+"log.txt", "a", encoding="utf-8")
+    train_avg_loss = 0
+    dev_avg_loss = 0
+    r2 = 0
     for epoch in range(epochrange):
         losses = []
         n_correct = 0
@@ -137,6 +140,7 @@ def train_model(model, train_data_loader, dev_data_loader, loss_fn, optimizer, e
         display_str += '\tR^2 score: {:.4f}'
         log_file.write(display_str.format(epoch, train_avg_loss, dev_avg_loss, r2)+"\n")
     log_file.close()
+    return train_avg_loss, dev_avg_loss, r2
 
 # In[52]:
 
@@ -144,16 +148,16 @@ def train_chunk(model, loss_fn, optimizer, epochrange, x_data, y_data, data_spli
     train_data, dev_data = splitData(x_data, y_data, data_split_ratio)
     train_data_loader = DataLoader(train_data, batch_size=batch_size, drop_last=True)
     dev_data_loader = DataLoader(dev_data, batch_size=batch_size, drop_last=True)
-    train_model(model, train_data_loader, dev_data_loader, loss_fn, optimizer, epochrange, batch_size, filepath)
+    return train_model(model, train_data_loader, dev_data_loader, loss_fn, optimizer, epochrange, batch_size, filepath)
 
 #Start training
 def train(files_x, files_y, model, input_size, window_size, loss_fn, optimizer, filepath, epochrange, batch_size, cols_x, col_y):
-    #
-    #loss_fn = nn.MSELoss()
-    #optimizer = optim.AdamW(model.parameters(), lr=lr, eps=0.001)
     model = model.to(device)
     test_data_x = pd.DataFrame()
     test_data_y = pd.DataFrame()
+    last_epoch_train_loss = []
+    last_epoch_val_loss = []
+    last_epoch_r2 = []
     for i in range(len(files_x)):
         print("Current file: " + files_x[i])
         total_rows = sum(1 for row in open(files_x[i], 'r'))
@@ -166,7 +170,10 @@ def train(files_x, files_y, model, input_size, window_size, loss_fn, optimizer, 
                 x_data = chunk_x
                 y_data = chunk_y
                 if(current_loop < data_split_ratio * number_of_loops):
-                    train_chunk(model, loss_fn, optimizer, epochrange, x_data, y_data, data_split_ratio, batch_size,filepath)
+                    train_avg_loss, dev_avg_loss, r2 = train_chunk(model, loss_fn, optimizer, epochrange, x_data, y_data, data_split_ratio, batch_size,filepath)
+                    last_epoch_train_loss.append(train_avg_loss)
+                    last_epoch_val_loss.append(dev_avg_loss)
+                    last_epoch_r2.append(r2)
                 else:
                     print("Append test data")
                     test_data_x = test_data_x.append(x_data)
@@ -213,3 +220,9 @@ def train(files_x, files_y, model, input_size, window_size, loss_fn, optimizer, 
     plt.legend()
     plt.savefig(filepath+'whole.pdf')
     plt.close()
+
+    avg_train_loss = sum(last_epoch_train_loss)/len(last_epoch_train_loss)
+    avg_val_loss = sum(last_epoch_val_loss)/len(last_epoch_val_loss)
+    avg_val_r2 = sum(last_epoch_r2)/len(last_epoch_r2)
+
+    return avg_train_loss, avg_val_loss, loss, avg_val_r2, r2
