@@ -191,7 +191,7 @@ def train(files_x, files_y, model, input_size, window_size, loss_fn, optimizer, 
     plt.plot(list(range(len(preds))), preds, label="Predictions")
     plt.plot(list(range(len(test_data_y))), test_data_y.tolist(), label="Target")
     axes = plt.gca()
-    axes.set_ylim([145,148])
+    axes.set_ylim([160.2,161])
     axes.set_xlim([159000,160000])
     plt.legend()
     plt.savefig(filepath+'zoom.pdf')

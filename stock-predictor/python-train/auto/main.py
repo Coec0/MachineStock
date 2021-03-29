@@ -14,9 +14,9 @@ models = [trainbase.DeepModel(), trainbase.ShallowModel()]
 window_sizes = [70, 200, 700]
 fin_inds = ["price", "ema", "rsi", "macd", "volatility", "channels"]
 cols_y = [("5s", 0), ("15s", 2), ("30s", 4), ("60s", 6)]
-epochs = [5, 10, 50, 100]
+epochs = [5, 50]
 batch_sizes = [512]
-learning_rates = [0.1, 0.01, 0.001, 0.0001]
+learning_rates = [0.01, 0.001, 0.0001]
 
 iterator = itertools.product(models, epochs, batch_sizes, window_sizes, fin_inds, learning_rates, cols_y)
 
@@ -28,19 +28,19 @@ for params in iterator:
         input_size = ws
     elif(fin_ind == "ema"):
         input_size = ws+2
-        cols_x = [input_size, input_size+1]
+        cols_x = [ws, ws+1]
     elif(fin_ind == "rsi"):
         input_size = ws+1
-        cols_x = [input_size+2]
+        cols_x = [ws+2]
     elif(fin_ind == "macd"):
         input_size = ws+1
-        cols_x = [input_size+3]
+        cols_x = [ws+3]
     elif(fin_ind == "volatility"):
         input_size = ws+1
-        cols_x = [input_size+4]
+        cols_x = [ws+4]
     elif(fin_ind == "channels"):
         input_size = ws+8
-        cols_x = list(range(input_size+5, input_size+13))
+        cols_x = list(range(ws+5, ws+13))
 
     model.instantiate(input_size)
     optimizer = optim.AdamW(model.parameters(), lr=lr, eps=0.001)
@@ -49,8 +49,8 @@ for params in iterator:
 
     col_y_name, col_y = col_y_tup
 
-    files_x = [file_x_const.replace("%", str(input_size))]
-    files_y = [file_y_const.replace("%", str(input_size))]
+    files_x = [file_x_const.replace("%", str(ws))]
+    files_y = [file_y_const.replace("%", str(ws))]
 
     foldername = model.getName()+"_"+col_y_name+"_"+str(epoch)+"_"+str(batch_size)+"_"+fin_ind+"_"+str(lr)
     filepath = "Swedbank_A/"+str(ws)+"/"+foldername+"/"
