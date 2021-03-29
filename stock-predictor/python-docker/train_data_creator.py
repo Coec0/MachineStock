@@ -11,7 +11,7 @@ import decimal
 import sys
 import os
 
-def build_input_row(stock, data_processors, time, normalize):
+def build_input_row(stock, data_processors, time, current_second, normalize):
     stack = []
     min_max_tuple = None
     #for stock in stocks:
@@ -26,6 +26,7 @@ def build_input_row(stock, data_processors, time, normalize):
     financial_models = list(data_processors[stock].get_financial_models())
     if(len(financial_models)>0):
         stack.extend(financial_models)
+    stack.append(current_second)
     stack.append(int(time))
     return stack, min_max_tuple
 
@@ -76,6 +77,7 @@ def get_column_names(stock, params, dp):
                 cols.append(stock + "-max_y"+str(time))
         else:
             cols.append(stock+model)
+    cols.append("time")
     cols.append("ts")
     return cols
 
@@ -227,6 +229,7 @@ def create_train_data(params, _data):
     file = open(dir_path+name, 'w+', newline ='')
     end_time = 0
     day = []
+    current_second = 0
     with file:
         write = csv.writer(file, delimiter=';')
         write.writerow(get_column_names(stock, params, dp))
@@ -238,8 +241,9 @@ def create_train_data(params, _data):
                         time = market_order["publication_time"]
                         end_trade_day(write, data_processors, day)
                         day = []
+                        current_second = 0
                     elif data_processors[stock].is_window_filled():
-                        row, min_max_tuple = build_input_row(stock, data_processors, time, normalize)
+                        row, min_max_tuple = build_input_row(stock, data_processors, time, current_second, normalize)
                         day.append(row)
                         end_time = row[-1]
                         if params["window_size"] != 0:
@@ -247,8 +251,11 @@ def create_train_data(params, _data):
                             if min_max_tuple!=None:
                                 min_max_map[time] = min_max_tuple
                         time += 1
+                        current_second += 1
                     else:
                         time += 1
+                        current_second += 1
+
             data_processors[stock].process(market_order)
         print(time)
         end_trade_day(write, data_processors, day)
