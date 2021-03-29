@@ -17,6 +17,7 @@ class DataProcessor:
         self.useVol = "volume" in params["market_order_features"]
         self.stock = stock
         self.params = params
+        self.timestamp_start_of_day = 0
         self.window_size = params["window_size"]
         self.channels = [PriceChannels(1200, 10, params["normalize"]), PriceChannels(7200, 10, params["normalize"])]
         self.rsi = {"window" : deque(maxlen=14),
@@ -30,7 +31,8 @@ class DataProcessor:
                            "window_size":50,
                            "mean" : 0,
                            "varsum":0}
-        self.processed = {"window" : deque(maxlen=self.window_size),
+        self.processed = {"window_price" : deque(maxlen=self.window_size),
+                          "window_time": deque(maxlen=self.window_size),
                           "rsi" : 0,
                           "ema12":0,
                           "ema26":0,
@@ -42,7 +44,7 @@ class DataProcessor:
             yield row._asdict()
 
     def get_window(self):
-        return self.processed["window"]
+        return self.processed["window_price"], self.processed["window_time"]
 
     def get_financial_models(self):
         data = []
@@ -142,7 +144,8 @@ class DataProcessor:
         return mr
 
     def clear(self):
-        self.processed["window"].clear()
+        self.processed["window_price"].clear()
+        self.processed["window_time"].clear()
 
         #reset rsi
         self.rsi["seg_start"] = -1
@@ -153,11 +156,16 @@ class DataProcessor:
         #self.ema["window26"].clear()
 
     def is_window_filled(self):
-        return len(self.processed["window"]) == self.window_size
+        return len(self.processed["window_price"]) == self.window_size
 
     def process(self, market_order): #JSON/dict
         mr = self.trim_market_order(market_order)
-        self.processed["window"].append(mr)
+        self.processed["window_price"].append(mr)
+        if len(self.processed["window_time"]) == 0:
+            dt = datetime.fromtimestamp(market_order["publication_time"])
+            stamp = datetime(dt.year, dt.month, dt.day, 9, 0).timestamp()
+            self.timestamp_start_of_day = stamp
+        self.processed["window_time"].append(market_order["publication_time"] - self.timestamp_start_of_day)
 
         if(self.useEMA or self.useMACD):
             self.update_ema(market_order)

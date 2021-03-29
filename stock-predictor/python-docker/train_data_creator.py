@@ -11,22 +11,22 @@ import decimal
 import sys
 import os
 
-def build_input_row(stock, data_processors, time, current_second, normalize):
+def build_input_row(stock, data_processors, time, normalize):
     stack = []
     min_max_tuple = None
     #for stock in stocks:
-    market_orders = np.array((data_processors[stock].get_window())).ravel()
+    market_orders, market_times = np.array((data_processors[stock].get_window())).ravel()
     if(len(market_orders)>0):
         if normalize:
             market_orders, min_max_tuple = normalize_array(market_orders)
         stack.extend(market_orders)
+        stack.extend(market_times)
 
 
     #for stock in stocks:
     financial_models = list(data_processors[stock].get_financial_models())
     if(len(financial_models)>0):
         stack.extend(financial_models)
-    stack.append(current_second)
     stack.append(int(time))
     return stack, min_max_tuple
 
@@ -64,6 +64,8 @@ def get_column_names(stock, params, dp):
     for i in range(params["window_size"]):
         for feature in params["market_order_features"]:
             cols.append(stock+"-"+feature+"-"+str(i))
+    for i in range(params["window_size"]):
+        cols.append(stock+"-time-"+str(i))
     for model in params["financial_models"]:
         if model == "ema":
             cols.append(stock+"-ema12")
@@ -77,7 +79,6 @@ def get_column_names(stock, params, dp):
                 cols.append(stock + "-max_y"+str(time))
         else:
             cols.append(stock+model)
-    cols.append("time")
     cols.append("ts")
     return cols
 
@@ -229,7 +230,6 @@ def create_train_data(params, _data):
     file = open(dir_path+name, 'w+', newline ='')
     end_time = 0
     day = []
-    current_second = 1
     with file:
         write = csv.writer(file, delimiter=';')
         write.writerow(get_column_names(stock, params, dp))
@@ -241,9 +241,8 @@ def create_train_data(params, _data):
                         time = market_order["publication_time"]
                         end_trade_day(write, data_processors, day)
                         day = []
-                        current_second = 1
                     elif data_processors[stock].is_window_filled():
-                        row, min_max_tuple = build_input_row(stock, data_processors, time, current_second, normalize)
+                        row, min_max_tuple = build_input_row(stock, data_processors, time, normalize)
                         day.append(row)
                         end_time = row[-1]
                         if params["window_size"] != 0:
@@ -251,10 +250,8 @@ def create_train_data(params, _data):
                             if min_max_tuple!=None:
                                 min_max_map[time] = min_max_tuple
                         time += 1
-                        current_second += 1
                     else:
                         time += 1
-                        current_second += 1
 
             data_processors[stock].process(market_order)
         print(time)
