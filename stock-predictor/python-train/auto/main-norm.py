@@ -1,4 +1,4 @@
-import trainbase
+import trainbase_norm
 from torch import nn
 from torch import optim
 import itertools
@@ -64,7 +64,7 @@ try:
         files_x = [file_x_const.replace("%", str(ws))]
         files_y = [file_y_const.replace("%", str(ws))]
 
-        foldername = model.getName()+"_"+col_y_name+"_"+str(epoch)+"_"+str(batch_size)+"_"+fin_ind+"_"+str(lr)+"_"+str(useTime)
+        foldername = model.getName()+"_"+col_y_name+"_"+str(epoch)+"_"+str(batch_size)+"_"+fin_ind+"_"+str(lr)+"_"+str(useTime)+"_normal"
         filepath = "Swedbank_A/"+str(ws)+"/"+foldername+"/"
         if not os.path.exists(filepath):
             os.makedirs(filepath)
