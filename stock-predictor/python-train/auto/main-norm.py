@@ -1,4 +1,4 @@
-import trainbase_norm
+import trainbase_norm as trainbase
 from torch import nn
 from torch import optim
 import itertools
@@ -9,8 +9,8 @@ from datetime import datetime
 import traceback
 
 # replace % for number
-file_x_const = "Swedbank_A/x_Swedbank_A_%_p_normalized_ema_rsi_macd_volatility_channels.csv"
-file_y_const = "Swedbank_A/y_Swedbank_A_%.csv"
+file_x_const = "Swedbank_A/x_Swedbank_A_%_p_fullnormalized_ema_rsi_macd_volatility_channels_time.csv"
+file_y_const = "Swedbank_A/y_Swedbank_A_%_fullnormalized.csv"
 
 loss_fn = nn.MSELoss()
 
@@ -64,8 +64,8 @@ try:
         files_x = [file_x_const.replace("%", str(ws))]
         files_y = [file_y_const.replace("%", str(ws))]
 
-        foldername = model.getName()+"_"+col_y_name+"_"+str(epoch)+"_"+str(batch_size)+"_"+fin_ind+"_"+str(lr)+"_"+str(useTime)+"_normal"
-        filepath = "Swedbank_A/"+str(ws)+"/"+foldername+"/"
+        foldername = model.getName()+"_"+col_y_name+"_"+str(epoch)+"_"+str(batch_size)+"_"+fin_ind+"_"+str(lr)+"_"+str(useTime)
+        filepath = "Swedbank_A/"+str(ws)+"_normalized/"+foldername+"/"
         if not os.path.exists(filepath):
             os.makedirs(filepath)
             result = trainbase.train(files_x, files_y, model, input_size, ws, loss_fn, optimizer, filepath, epoch, batch_size, cols_x, col_y, min, max)
