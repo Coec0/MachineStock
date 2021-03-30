@@ -104,8 +104,8 @@ def evaluate_model(data, model, loss_fn):
             pred = model(x).squeeze()
             loss = loss_fn(pred, y)
             losses.append(loss.item())
-            ys.extend(y.tolist())
-            predictions.extend(pred.tolist())
+            ys.extend(y.tolist() if len(y.size())>0 else [y])
+            predictions.extend(pred.tolist() if len(pred.size())>0 else [pred])
         avg_loss = sum(losses)/len(losses)
     r2 = r2_score(ys, predictions)
     return avg_loss, predictions, r2
