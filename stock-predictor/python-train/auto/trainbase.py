@@ -167,18 +167,19 @@ def train(files_x, files_y, model, input_size, window_size, loss_fn, optimizer, 
         with pd.read_csv(files_x[i], sep=";", dtype="float32", usecols = cols_x, chunksize=chunksize) as reader_x, pd.read_csv(files_y[i], sep=";", dtype="float32", converters = {'ts': int}, chunksize=chunksize, usecols=[col_y]) as reader_y:
             for chunk_x, chunk_y in zip(reader_x, reader_y):
                 print("Progress: " + "{:.2f}".format(100 * current_loop/number_of_loops) + "%")
-                x_data = chunk_x
-                y_data = chunk_y
                 if(current_loop < data_split_ratio * number_of_loops):
-                    train_avg_loss, dev_avg_loss, r2 = train_chunk(model, loss_fn, optimizer, epochrange, x_data, y_data, data_split_ratio, batch_size,filepath)
+                    train_avg_loss, dev_avg_loss, r2 = train_chunk(model, loss_fn, optimizer, epochrange, chunk_x, chunk_y, data_split_ratio, batch_size,filepath)
                     last_epoch_train_loss.append(train_avg_loss)
                     last_epoch_val_loss.append(dev_avg_loss)
                     last_epoch_r2.append(r2)
                 else:
                     print("Append test data")
-                    test_data_x = test_data_x.append(x_data)
-                    test_data_y = test_data_y.append(y_data)
+                    test_data_x = test_data_x.append(chunk_x)
+                    test_data_y = test_data_y.append(chunk_y)
                 current_loop+=1
+                del chunk_x
+                del chunk_y
+
     torch.save(model, filepath+"model.pt")
 
     test_data_x = torch.tensor(test_data_x.values, dtype=torch.float32)
