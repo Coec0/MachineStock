@@ -63,7 +63,7 @@ def run(iterator):
             foldername = model.getName() + "_" + col_y_name + "_" + str(epoch) + "_" + str(
                 batch_size) + "_" + fin_ind + "_" + str(lr) + "_" + str(use_time)
             normalized = "_normalized" if normal else ""
-            filepath = "Swedbank_A/" + str(ws) + "/" + foldername
+            filepath = "Swedbank_A/" + str(ws) + "/" + foldername + "/"
             min_norm = 121.0
             max_norm = 165.9
             if not os.path.exists(filepath):
