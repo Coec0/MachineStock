@@ -11,7 +11,7 @@ batch_sizes = [512]
 learning_rates = [0.0001, 0.000001]
 useTime = [True, False]
 normal = [True]
-name = "norm_35_epochs"
+name = ["norm_35_epochs"]
 
 iterator = itertools.product(models, epochs, batch_sizes, window_sizes, fin_inds, learning_rates, cols_y, useTime, normal, name)
 
