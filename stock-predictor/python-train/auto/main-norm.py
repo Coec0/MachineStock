@@ -12,16 +12,20 @@ import traceback
 file_x_const = "Swedbank_A/x_Swedbank_A_%_p_fullnormalized_ema_rsi_macd_volatility_channels_time.csv"
 file_y_const = "Swedbank_A/y_Swedbank_A_%_fullnormalized.csv"
 
+file_x_const_norm = "Swedbank_A/x_Swedbank_A_%_p_fullnormalized_ema_rsi_macd_volatility_channels_time.csv"
+file_y_const_norm = "Swedbank_A/y_Swedbank_A_%_fullnormalized.csv"
+
 loss_fn = nn.MSELoss()
 
 models = [trainbase.DeepModel()] #trainbase.ShallowModel()
-window_sizes = [200]
+window_sizes = [70]
 fin_inds = ["price", "ema", "rsi", "macd", "volatility", "channels"]
 cols_y = [("5s", 0), ("15s", 2), ("30s", 4), ("60s", 6)]
 epochs = [5]
 batch_sizes = [512]
 learning_rates = [0.01, 0.0001, 0.000001]
 useTime = [True]
+normal = [True]
 
 min = 121.0
 max = 165.9

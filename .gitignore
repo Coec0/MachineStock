@@ -4,6 +4,9 @@ data/
 limitorders/
 marketorders/
 *.sql
+*.pdf
+*.pt
+*.txt
 stock-predictor/python-train/combined.csv
 stock-predictor/python-train/.ipynb_checkpoints/
 stock-predictor/python-docker/__pycache__/

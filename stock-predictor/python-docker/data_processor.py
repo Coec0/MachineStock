@@ -46,12 +46,14 @@ class DataProcessor:
     def get_window(self):
         return self.processed["window_price"], self.processed["window_time"]
 
-    def get_financial_models(self):
+    def get_financial_models(self, fullnormalize):
         data = []
         if(self.useEMA):
             data.append('%.4f' % self.processed["ema12"])
             data.append('%.4f' % self.processed["ema26"])
         if(self.useRSI):
+            if fullnormalize:
+                self.processed["rsi"] = self.processed["rsi"]/100
             data.append('%.4f' % self.processed["rsi"])
         if(self.useMACD):
             data.append('%.4f' % self.processed["macd"])

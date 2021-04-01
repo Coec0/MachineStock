@@ -15,7 +15,7 @@ file_y_const = "Swedbank_A/y_Swedbank_A_%.csv"
 loss_fn = nn.MSELoss()
 
 models = [trainbase.DeepModel()] #trainbase.ShallowModel()
-window_sizes = [70, 200, 700]
+window_sizes = [70, 200]
 fin_inds = ["price", "ema", "rsi", "macd", "volatility", "channels"]
 cols_y = [("5s", 0), ("15s", 2), ("30s", 4), ("60s", 6)]
 epochs = [5]

@@ -11,22 +11,22 @@ import decimal
 import sys
 import os
 
-def build_input_row(stock, data_processors, time, normalize):
+def build_input_row(stock, data_processors, time, normalize, fullnormalize):
     stack = []
     min_max_tuple = None
     #for stock in stocks:
     market_orders, market_times = data_processors[stock].get_window()
     market_orders = np.array(market_orders).ravel()
-    market_times = np.array(market_times).ravel()
+    #market_times = np.array(market_times).ravel()
     if(len(market_orders)>0):
         if normalize:
-            market_orders, min_max_tuple = normalize_array(market_orders)
+            market_orders, min_max_tuple = normalize_price_array(market_orders)
+        #market_times = normalize_time_array(market_times) #TODODODO
         stack.extend(market_orders)
-        stack.extend(market_times)
-
+        #stack.extend(market_times)
 
     #for stock in stocks:
-    financial_models = list(data_processors[stock].get_financial_models())
+    financial_models = list(data_processors[stock].get_financial_models(fullnormalize))
     if(len(financial_models)>0):
         stack.extend(financial_models)
     stack.append(int(time))
@@ -36,20 +36,26 @@ def build_input_row(stock, data_processors, time, normalize):
 def to_norm(x, min_x, max_x):
     max_x = max_x#* 1.10
     min_x = min_x#* 0.9
-    return round((x-min_x)/(max_x-min_x+0.0001),4)
+    return round((x-min_x)/(max_x-min_x+0.0000001),7)
 
 def from_norm(x, min_x, max_x):
     max_x = max_x#/ 1.10
     min_x = min_x#/ 0.9
-    return round(x*(max_x-min_x+0.0001)+min_x,4)
+    return round(x*(max_x-min_x+0.0000001)+min_x,7)
 
-def normalize_array(array):
+def normalize_price_array(array):
     max_x = array.max() #* 1.10
     min_x = array.min() #* 0.9
 
-    f = lambda x: np.around((x-min_x)/(max_x-min_x+0.0001),4)
-
+    f = lambda x: np.around((x-min_x)/(max_x-min_x+0.0000001),7)
     return f(array), (min_x, max_x)
+
+def normalize_time_array(array):
+    max_x = 8.5*60*60
+    min_x = 0
+
+    f = lambda x: np.around((x-min_x)/(max_x-min_x),7)
+    return f(array)
 
 def is_market_open(time):
     dt = datetime.fromtimestamp(time)
@@ -66,8 +72,8 @@ def get_column_names(stock, params, dp):
     for i in range(params["window_size"]):
         for feature in params["market_order_features"]:
             cols.append(stock+"-"+feature+"-"+str(i))
-    for i in range(params["window_size"]):
-        cols.append(stock+"-time-"+str(i))
+    #for i in range(params["window_size"]):
+        #cols.append(stock+"-time-"+str(i))
     for model in params["financial_models"]:
         if model == "ema":
             cols.append(stock+"-ema12")
@@ -127,7 +133,8 @@ def generate_x_name(params):
         name += "_normalized"
 
     #TODODODODODODOD#
-    name += "_time"
+    #name += "_time"
+    name += "_fullnormalized"
 
     name += ".csv"
     return name
@@ -138,6 +145,7 @@ def generate_y_name(params):
         name += str(params["window_size"])
     if params["normalize"]:
         name += "_normalized"
+    name += "_fullnormalized"
     name += ".csv"
     return name
 
@@ -211,8 +219,16 @@ def create_train_data(params, _data):
     #for stock in params["stocks"]:
     #    filter = (data["stock"] == stock) | filter
     data = _data[filter]
+    fullnormalize = params["fullnormalize"]
+    min = data["price"].min()
+    max = data["price"].max()
+    print("Min price: "+str(min))
+    print("Max price: "+str(max))
+    data["price"] =(data["price"]-min)/(max-min)
 
-    data_processors ={}
+    print(data.head())
+
+    data_processors = {}
     print("Calc starting window ...")
     #for stock in params["stocks"]:
     dp = DataProcessor(stock, params)
@@ -248,7 +264,7 @@ def create_train_data(params, _data):
                         end_trade_day(write, data_processors, day)
                         day = []
                     elif data_processors[stock].is_window_filled():
-                        row, min_max_tuple = build_input_row(stock, data_processors, time, normalize)
+                        row, min_max_tuple = build_input_row(stock, data_processors, time, normalize, fullnormalize)
                         day.append(row)
                         end_time = row[-1]
                         if params["window_size"] != 0:
@@ -272,18 +288,21 @@ def create_train_data(params, _data):
 params = {
     "stocks" : ["Swedbank_A"],
     "window_sizes" : [70, 200, 700],
-    "financial_models" : ["channels"],
+    "financial_models" : [],
     "market_order_features" : ["price"],
     "threshold" : 0.0002,
-    "normalize" : False
+    "normalize" : False,
+    "fullnormalize": True
 }
 
 datafile = sys.argv[1]
 print("Reading csv: " + datafile)
 data = pd.read_csv(datafile, sep=";", usecols=["price", "stock", "publication_time"])
 
+
 for stock in params["stocks"]:
     param = {}
+    param["fullnormalize"] = True
     param["financial_models"] = ["ema", "rsi", "macd", "volatility", "channels"]
     param["threshold"] = 0.0002
     param["stock"] = stock
