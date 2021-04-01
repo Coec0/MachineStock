@@ -1,4 +1,4 @@
-import trainbase_norm as trainbase
+import trainbase
 from torch import nn
 from torch import optim
 import itertools
@@ -9,28 +9,27 @@ from datetime import datetime
 import traceback
 
 # replace % for number
-file_x_const = "Swedbank_A/x_Swedbank_A_%_p_fullnormalized_ema_rsi_macd_volatility_channels_time.csv"
-file_y_const = "Swedbank_A/y_Swedbank_A_%_fullnormalized.csv"
-
-file_x_const_norm = "Swedbank_A/x_Swedbank_A_%_p_fullnormalized_ema_rsi_macd_volatility_channels_time.csv"
-file_y_const_norm = "Swedbank_A/y_Swedbank_A_%_fullnormalized.csv"
+file_x_const = "Swedbank_A/x_Swedbank_A_%_p_ema_rsi_macd_volatility_channels.csv"
+file_y_const = "Swedbank_A/y_Swedbank_A_%.csv"
 
 loss_fn = nn.MSELoss()
 
 models = [trainbase.DeepModel()] #trainbase.ShallowModel()
-window_sizes = [70]
+window_sizes = [70, 200, 700]
 fin_inds = ["price", "ema", "rsi", "macd", "volatility", "channels"]
 cols_y = [("5s", 0), ("15s", 2), ("30s", 4), ("60s", 6)]
 epochs = [5]
 batch_sizes = [512]
 learning_rates = [0.01, 0.0001, 0.000001]
-useTime = [True]
-normal = [True]
+useTime = [False]
 
-min = 121.0
-max = 165.9
+#iterator = itertools.product(models, epochs, batch_sizes, window_sizes, fin_inds, learning_rates, cols_y, useTime)
 
-iterator = itertools.product(models, epochs, batch_sizes, window_sizes, fin_inds, learning_rates, cols_y, useTime)
+combinations = [[trainbase.DeepModel(), 50, 512, 70, "channels", 0.000001, ("5s", 0), False],
+                [trainbase.DeepModel(), 50, 512, 200, "channels", 0.000001, ("5s", 0), False],
+                [trainbase.DeepModel(), 50, 512, 700, "channels", 0.000001, ("5s", 0), False]]
+iterator = iter(combinations)
+
 
 resultframe = pd.DataFrame(columns = ["stock", "avg-train-loss", "avg-val-loss", "avg-test-loss", "val-r2", "test-r2", "epochs", "learning-rate", "x-col", "y-col", "window-size", "batch-size", "use-time"])
 
@@ -69,10 +68,10 @@ try:
         files_y = [file_y_const.replace("%", str(ws))]
 
         foldername = model.getName()+"_"+col_y_name+"_"+str(epoch)+"_"+str(batch_size)+"_"+fin_ind+"_"+str(lr)+"_"+str(useTime)
-        filepath = "Swedbank_A/"+str(ws)+"_normalized/"+foldername+"/"
+        filepath = "Swedbank_A/"+str(ws)+"/"+foldername+"/"
         if not os.path.exists(filepath):
             os.makedirs(filepath)
-            result = trainbase.train(files_x, files_y, model, input_size, ws, loss_fn, optimizer, filepath, epoch, batch_size, cols_x, col_y, min, max)
+            result = trainbase.train(files_x, files_y, model, input_size, ws, loss_fn, optimizer, filepath, epoch, batch_size, cols_x, col_y)
             train_loss, val_loss, test_loss, val_r2, test_r2 = result
             row = ["Swedbank_A", train_loss, val_loss, test_loss, val_r2, test_r2, epoch, lr, fin_ind, col_y_name, ws, batch_size, int(useTime)]
             resultframe.loc[len(resultframe)] = row
