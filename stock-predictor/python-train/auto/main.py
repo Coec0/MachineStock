@@ -27,7 +27,7 @@ def run(iterator):
         for params in iterator:
             print(params)
             cols_x = []
-            model, epoch, batch_size, ws, fin_ind, lr, col_y_tup, use_time, normal = params
+            model, epoch, batch_size, ws, fin_ind, lr, col_y_tup, use_time, normal, name = params
             mult = 2 if use_time else 1
             if fin_ind == "price":
                 input_size = ws * mult
@@ -62,7 +62,8 @@ def run(iterator):
 
             foldername = model.getName() + "_" + col_y_name + "_" + str(epoch) + "_" + str(
                 batch_size) + "_" + fin_ind + "_" + str(lr) + "_" + str(use_time)
-            filepath = "Swedbank_A/" + str(ws) + "_normalized/" + foldername + "/"
+            normalized = "_normalized" if normal else ""
+            filepath = "Swedbank_A/" + str(ws) + normalized + foldername + "/"
             min_norm = 121.0
             max_norm = 165.9
             if not os.path.exists(filepath):
@@ -80,11 +81,11 @@ def run(iterator):
                 result_frame.loc[len(result_frame)] = row
 
         ts = str(int(datetime.now().timestamp()))
-        result_frame.to_csv("Swedbank_A/Swedbank_A_" + ts + ".csv", index=False)
+        result_frame.to_csv("Swedbank_A/Swedbank_A_" + name + ts + ".csv", index=False)
         print("Done")
     except:
         print("Error")
         traceback.print_exc()
         ts = str(int(datetime.now().timestamp()))
-        result_frame.to_csv("Swedbank_A/Swedbank_A_" + ts + ".csv", index=False)
+        result_frame.to_csv("Swedbank_A/Swedbank_A_" + name + ts + ".csv", index=False)
         shutil.rmtree(filepath)

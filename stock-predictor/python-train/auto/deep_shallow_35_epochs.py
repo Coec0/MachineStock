@@ -11,7 +11,8 @@ batch_sizes = [512]
 learning_rates = [0.0001, 0.000001]
 useTime = [False]
 normal = [False]
+name = "deep_shallow_35_epochs"
 
-iterator = itertools.product(models, epochs, batch_sizes, window_sizes, fin_inds, learning_rates, cols_y, useTime, normal)
+iterator = itertools.product(models, epochs, batch_sizes, window_sizes, fin_inds, learning_rates, cols_y, useTime, normal, name)
 
 main.run(iterator)
