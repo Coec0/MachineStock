@@ -22,7 +22,7 @@ import os
 #Params
 dtype = torch.cuda.FloatTensor
 device = torch.device('cuda:0')
-chunksize = 1000000
+chunksize = 500000
 data_split_ratio=0.8
 
 #input_size= 200
