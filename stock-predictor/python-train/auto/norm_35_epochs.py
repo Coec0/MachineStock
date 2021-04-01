@@ -3,7 +3,7 @@ import itertools
 import main
 
 models = [trainbase.DeepModel()] #trainbase.ShallowModel()
-window_sizes = [70, 200, 700]
+window_sizes = [70, 200]
 fin_inds = ["price", "ema", "rsi", "macd", "volatility", "channels"]
 cols_y = [("5s", 0), ("30s", 4)]
 epochs = [35]
