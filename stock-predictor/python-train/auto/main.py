@@ -60,9 +60,10 @@ def run(iterator):
             files_x = [selected_file_x_const.replace("%", str(ws))]
             files_y = [selected_file_y_const.replace("%", str(ws))]
 
-            foldername = model.getName() + "_" + col_y_name + "_" + str(epoch) + "_" + str(
-                batch_size) + "_" + fin_ind + "_" + str(lr) + "_" + str(use_time)
             normalized = "_normalized" if normal else ""
+            foldername = model.getName() + "_" + col_y_name + "_" + str(epoch) + "_" + str(
+                batch_size) + "_" + fin_ind + "_" + str(lr) + "_" + str(use_time) + normalized
+
             filepath = "Swedbank_A/" + str(ws) + "/" + foldername + "/"
             min_norm = 121.0
             max_norm = 165.9

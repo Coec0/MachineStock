@@ -192,7 +192,7 @@ def train(files_x, files_y, model, input_size, window_size, loss_fn, optimizer, 
     x_avg = test_data_x[:, 0:window_size]
     x_avg = torch.mean(x_avg, 1)
 
-    test_data_loader = DataLoader(test_data, batch_size=2)
+    test_data_loader = DataLoader(test_data, batch_size=512)
     loss, preds, r2 = evaluate_model(test_data_loader, model, loss_fn)
 
     target = [from_norm(t, min, max) for t in test_data_y.flatten().tolist()]
@@ -203,20 +203,20 @@ def train(files_x, files_y, model, input_size, window_size, loss_fn, optimizer, 
         f.write("\n------\nTest loss: " + str(loss))
         f.write("\nTest R^2: " + str(r2))
 
-    plt.plot(list(range(len(preds))), preds, label="Predictions")
-    plt.plot(list(range(len(target))), target, label="Target")
+    plt.plot(list(range(159000, 160000)), preds[159000:160000], label="Predictions")
+    plt.plot(list(range(159000, 160000)), target[159000:160000], label="Target")
     axes = plt.gca()
-    axes.set_xlim([159000,160000])
+    #axes.set_xlim([159000,160000])
     plt.legend()
     plt.savefig(filepath+'zoom.pdf')
     plt.close()
 
-    plt.plot(list(range(len(preds))), preds, label="Predictions")
-    plt.plot(list(range(len(target))), target, label="Target")
-    plt.plot(list(range(len(x_avg))), x_avg, label="Avg price")
+    plt.plot(list(range(100000,120000)), preds[100000:120000], label="Predictions")
+    plt.plot(list(range(100000,120000)), target[100000:120000], label="Target")
+    plt.plot(list(range(100000,120000)), x_avg[100000:120000], label="Avg price")
     axes = plt.gca()
     plt.legend()
-    axes.set_xlim([100000,120000])
+    #axes.set_xlim([100000,120000])
     plt.savefig(filepath+'avg.pdf')
     plt.close()
 
@@ -227,8 +227,11 @@ def train(files_x, files_y, model, input_size, window_size, loss_fn, optimizer, 
     plt.savefig(filepath+'whole.pdf')
     plt.close()
 
-    avg_train_loss = sum(last_epoch_train_loss)/len(last_epoch_train_loss)
-    avg_val_loss = sum(last_epoch_val_loss)/len(last_epoch_val_loss)
-    avg_val_r2 = sum(last_epoch_r2)/len(last_epoch_r2)
+    #avg_train_loss = sum(last_epoch_train_loss)/len(last_epoch_train_loss)
+    #avg_val_loss = sum(last_epoch_val_loss)/len(last_epoch_val_loss)
+    #avg_val_r2 = sum(last_epoch_r2)/len(last_epoch_r2)
+    avg_train_loss = last_epoch_train_loss[-1]
+    avg_val_loss = last_epoch_val_loss[-1]
+    avg_val_r2 = last_epoch_r2[-1]
 
     return avg_train_loss, avg_val_loss, loss, avg_val_r2, r2
