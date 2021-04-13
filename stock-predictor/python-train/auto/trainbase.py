@@ -197,7 +197,7 @@ def train(files_x, files_y, model, input_size, window_size, loss_fn, optimizer, 
         f.write("\nTest R^2: " + str(r2))
 
     plt.plot(list(range(159000, 160000)), preds[159000:160000], label="Predictions")
-    plt.plot(list(range(159000, 160000)), target[159000:160000], label="Target")
+    plt.plot(list(range(159000, 160000)), test_data_y[159000:160000], label="Target")
     axes = plt.gca()
     #axes.set_xlim([159000,160000])
     plt.legend()
@@ -205,7 +205,7 @@ def train(files_x, files_y, model, input_size, window_size, loss_fn, optimizer, 
     plt.close()
 
     plt.plot(list(range(100000,120000)), preds[100000:120000], label="Predictions")
-    plt.plot(list(range(100000,120000)), target[100000:120000], label="Target")
+    plt.plot(list(range(100000,120000)), test_data_y[100000:120000], label="Target")
     plt.plot(list(range(100000,120000)), x_avg[100000:120000], label="Avg price")
     axes = plt.gca()
     plt.legend()
