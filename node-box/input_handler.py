@@ -4,10 +4,10 @@ from node_box_processor import NodeBoxProcessor
 from observer import Observer
 
 
-class NodeBoxWrapper:
-    def __init__(self, ws, number_of_features, processor: NodeBoxProcessor, observer: Observer):
-        self.number_of_features = number_of_features
-        self.smart_sync = SmartSync(ws, number_of_features)
+class InputHandler:
+    def __init__(self, ws, input_size, processor: NodeBoxProcessor, observer: Observer):
+        self.number_of_features = input_size
+        self.smart_sync = SmartSync(ws, input_size)
         self.processor = processor
         self.observer = observer
 
