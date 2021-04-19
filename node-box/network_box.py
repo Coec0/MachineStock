@@ -32,7 +32,9 @@ class NetworkInput:
 
     def connect(self, ip, port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(30)
         sock.connect((ip, port))
+        sock.settimeout(None)
         input_thread = InputThread(sock, self.input_handler)
         input_thread.start()
 
@@ -50,7 +52,7 @@ class NetworkOutput(Observer):
     def _run_server(self):
         while True:
             connection, (ip, port) = self.server_socket.accept()
-            print('Got connection from ', (ip, port))
+            print(str(self.id) + ' got connection from ', (ip, port))
             self.connections.append(connection)
 
     def notify(self, result: (int, float32)):

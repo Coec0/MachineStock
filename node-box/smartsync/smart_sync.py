@@ -10,6 +10,7 @@ class SmartSync:
     #  node_number should start at 0
     #  Returns all values as an numpy array for the current timestamp if it is full, else None
     def put(self, timestamp, node_number, value):
+        node_number = node_number % self.number_of_nodes
         arr_pos = timestamp % self.ws
         int_div = timestamp // self.ws
         if self.collector1[arr_pos][0] < int_div:  # Clear row if cycled through array

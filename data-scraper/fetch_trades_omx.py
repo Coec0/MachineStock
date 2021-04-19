@@ -3,7 +3,7 @@ import json
 import os
 import time
 
-from_date = "2020-11-18"
+from_date = "2021-03-16"
 fetcher = RequestOMX()
 
 with open("stocks.json", "r") as file:
