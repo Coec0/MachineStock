@@ -6,16 +6,20 @@ from nodebox import NodeBox
 import threading
 
 
-def start_node_box(layer):
-    NodeBox("localhost", 5500, layer, 3)
+def start_node_box(layer, file=None):
+    if file is None:
+        NodeBox("localhost", 5500, layer, 3, file)
+    else:
+        NodeBox("localhost", 5500, layer, 140, file)
 
 
-Coordinator(5501, 4, FullyConnectedStrategy())
-t1 = threading.Thread(target=start_node_box, args=(0,))
+file1 = "x_Swedbank_A_70_p_ema_rsi_macd_volatility_channels_time.csv"
+Coordinator(5500, 4, FullyConnectedStrategy())
+t1 = threading.Thread(target=start_node_box, args=(0, file1))
 t1.start()
-t2 = threading.Thread(target=start_node_box, args=(0,))
+t2 = threading.Thread(target=start_node_box, args=(0, file1))
 t2.start()
-t3 = threading.Thread(target=start_node_box, args=(0,))
+t3 = threading.Thread(target=start_node_box, args=(0, file1))
 t3.start()
 start_node_box(1)
 #l1_0.connect("localhost", 12348)
