@@ -16,16 +16,15 @@ class ExampleProcessor(NodeBoxProcessor):
 
 
 class NodeBox:
-    def __init__(self, coord_ip, coord_port, layer, input_size, local_file=None, ws=10):
+    def __init__(self, coord_ip, coord_port, layer, input_size, processor, local_file=None, ws=10):
         self.config = self.__fetch_coordinator_config(coord_ip, coord_port, layer)
         self.local_file = local_file
         print(self.config)
         output_network = NetworkOutput(self.config["port"], self.config["id"])
-        processor = ExampleProcessor()
         input_handler = InputHandler(ws, input_size, processor, output_network)
         self.network_input = NetworkInput(input_handler)
         if local_file is not None:
-            self.local_input = FileInput(local_file, input_handler, ws)
+            self.local_input = FileInput(local_file, input_handler, input_size)
         self.connect()
 
     def connect(self):

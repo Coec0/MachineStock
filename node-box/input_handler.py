@@ -1,4 +1,7 @@
 from threading import Thread
+
+from numpy import ndarray
+
 from smartsync.smart_sync import SmartSync
 from node_box_processor import NodeBoxProcessor
 from observer import Observer
@@ -17,7 +20,7 @@ class InputHandler:
             thread = Thread(target=self.__process_arr, args=(timestamp, arr))
             thread.start()
 
-    def put_all(self, timestamp, values):
+    def put_all(self, timestamp, values: ndarray):
         thread = Thread(target=self.__process_arr, args=(timestamp, values))
         thread.start()
 

@@ -1,0 +1,50 @@
+import torch
+from numpy import ndarray
+from torch import float32
+from torch import nn
+import torch.nn.functional as f
+
+from node_box_processor import NodeBoxProcessor
+
+
+class DeepNetworkProcessor(NodeBoxProcessor):
+    def __init__(self, weights_file, predicted_timestamp, ws):
+        self.predicted_timestamp = predicted_timestamp
+        self.model = DeepModel(ws)
+        self.model.load_state_dict(torch.load(weights_file))
+        self.model.eval()
+
+    def process(self, timestamp, features: ndarray) -> (int, float32):
+        """Process the data and return the result as a tuple of (timestamp, result).
+        The timestamp is the timestamp of when the result is predicted for """
+        return int(timestamp) + int(self.predicted_timestamp), self.predict(features)
+
+    def predict(self, features: ndarray):
+        with torch.no_grad():
+            x = torch.tensor(features).type(torch.cuda.FloatTensor)
+            return self.model(x)
+
+
+class DeepModel(nn.Module):
+    def __init__(self, input_size):
+        data_type = torch.cuda.FloatTensor
+        device = torch.device('cuda:0')
+        super().__init__()
+        self.fc1 = nn.Linear(input_size, input_size*2).type(data_type)
+        self.fc1.weight.data.uniform_(-0.1, 0.1)
+        self.fc2 = nn.Linear(input_size*2, round(input_size*1.5)).type(data_type)
+        self.fc2.weight.data.uniform_(-0.1, 0.1)
+        self.fc3 = nn.Linear(round(input_size*1.5), round(input_size*0.5)).type(data_type)
+        self.fc3.weight.data.uniform_(-0.1, 0.1)
+        self.fc4 = nn.Linear(round(input_size*0.5), 20).type(data_type)
+        self.fc4.weight.data.uniform_(-0.1, 0.1)
+        self.fc5 = nn.Linear(20, 1).type(data_type)
+        self.fc5.weight.data.uniform_(-0.1, 0.1)
+
+    def forward(self, x):
+        x = f.leaky_relu(self.fc1(x))
+        x = f.leaky_relu(self.fc2(x))
+        x = f.leaky_relu(self.fc3(x))
+        x = f.leaky_relu(self.fc4(x))
+        x = f.leaky_relu(self.fc5(x))
+        return x

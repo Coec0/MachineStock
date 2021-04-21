@@ -59,5 +59,5 @@ class NetworkOutput(Observer):
         for c in self.connections:
             data = {"id": str(self.id),
                     "ts": str(result[0]),
-                    "data": str(result[1])}
+                    "data": str(result[1].item())}
             c.send(json.dumps(data).encode("utf-8"))
