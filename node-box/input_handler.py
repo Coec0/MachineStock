@@ -14,9 +14,13 @@ class InputHandler:
     def put(self, timestamp, node_number, value):
         arr = self.smart_sync.put(timestamp, node_number, value)
         if arr is not None:
-            thread = Thread(target=self.__process_arr, args=(arr,))
+            thread = Thread(target=self.__process_arr, args=(timestamp, arr))
             thread.start()
 
-    def __process_arr(self, arr):
-        self.observer.notify(self.processor.process(arr))
+    def put_all(self, timestamp, values):
+        thread = Thread(target=self.__process_arr, args=(timestamp, values))
+        thread.start()
+
+    def __process_arr(self, timestamp, arr):
+        self.observer.notify(self.processor.process(timestamp, arr))
 

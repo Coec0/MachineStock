@@ -1,5 +1,6 @@
 from network_box import *
 from node_box_processor import NodeBoxProcessor
+from file_input import FileInput
 from numpy import ndarray
 from torch import float32
 import json
@@ -9,24 +10,33 @@ class ExampleProcessor(NodeBoxProcessor):
     def __init__(self):
         self.ts = 0
 
-    def process(self, features: ndarray) -> (int, float32):
+    def process(self, timestamp, features: ndarray) -> (int, float32):
         self.ts += 1
         return self.ts, self.ts*self.ts
 
 
 class NodeBox:
-    def __init__(self, coord_ip, coord_port, layer, input_size, ws=10):
+    def __init__(self, coord_ip, coord_port, layer, input_size, local_file=None, ws=10):
         self.config = self.__fetch_coordinator_config(coord_ip, coord_port, layer)
+        self.local_file = local_file
         print(self.config)
         output_network = NetworkOutput(self.config["port"], self.config["id"])
         processor = ExampleProcessor()
         input_handler = InputHandler(ws, input_size, processor, output_network)
         self.network_input = NetworkInput(input_handler)
+        if local_file is not None:
+            self.local_input = FileInput(local_file, input_handler, ws)
         self.connect()
 
     def connect(self):
         for ip, port in self.config["server_ip_port"]:
             self.network_input.connect(ip, port)
+
+        # If no ip to connect to, try to read local file
+        if len(self.config["server_ip_port"]) == 0 and self.local_file is not None:
+            self.local_input.start()
+
+
 
     @staticmethod
     def __fetch_coordinator_config(coord_ip, coord_port, layer):
