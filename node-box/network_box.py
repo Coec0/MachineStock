@@ -2,7 +2,6 @@ import threading
 from threading import Thread
 import socket
 import json
-from torch import float32
 from observer import Observer
 from input_handler import InputHandler
 
@@ -55,9 +54,9 @@ class NetworkOutput(Observer):
             print(str(self.id) + ' got connection from ', (ip, port))
             self.connections.append(connection)
 
-    def notify(self, result: (int, float32)):
+    def notify(self, result: (int, float)):
         for c in self.connections:
             data = {"id": str(self.id),
                     "ts": str(result[0]),
-                    "data": str(result[1].item())}
+                    "data": str(result[1])}
             c.send(json.dumps(data).encode("utf-8"))
