@@ -1,6 +1,5 @@
 import torch
 from numpy import ndarray
-from torch import float32
 from torch import nn
 import torch.nn.functional as f
 
@@ -14,10 +13,10 @@ class DeepNetworkProcessor(NodeBoxProcessor):
         self.model.load_state_dict(torch.load(weights_file))
         self.model.eval()
 
-    def process(self, timestamp, features: ndarray) -> (int, float32):
+    def process(self, timestamp, features: ndarray) -> (int, float):
         """Process the data and return the result as a tuple of (timestamp, result).
         The timestamp is the timestamp of when the result is predicted for """
-        return int(timestamp) + int(self.predicted_timestamp), self.predict(features)
+        return int(timestamp) + int(self.predicted_timestamp), self.predict(features).item()
 
     def predict(self, features: ndarray):
         with torch.no_grad():
