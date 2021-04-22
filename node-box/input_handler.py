@@ -3,7 +3,7 @@ from threading import Thread
 from numpy import ndarray
 
 from smartsync.smart_sync import SmartSync
-from node_box_processor import NodeBoxProcessor
+from processors.node_box_processor import NodeBoxProcessor
 from observer import Observer
 
 
