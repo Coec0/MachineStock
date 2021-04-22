@@ -6,15 +6,6 @@ from torch import float32
 import json
 
 
-class ExampleProcessor(NodeBoxProcessor):
-    def __init__(self):
-        self.ts = 0
-
-    def process(self, timestamp, features: ndarray) -> (int, float32):
-        self.ts += 1
-        return self.ts, self.ts*self.ts
-
-
 class NodeBox:
     def __init__(self, coord_ip, coord_port, layer, input_size, processor, local_file=None, ws=10):
         self.config = self.__fetch_coordinator_config(coord_ip, coord_port, layer)

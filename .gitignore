@@ -5,7 +5,7 @@ limitorders/
 marketorders/
 *.sql
 *.pdf
-*.pt
+stock-predictor/*.pt
 *.txt
 stock-predictor/python-train/combined.csv
 stock-predictor/python-train/.ipynb_checkpoints/
