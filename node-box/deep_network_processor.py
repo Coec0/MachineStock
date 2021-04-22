@@ -1,4 +1,6 @@
+from collections import deque
 import torch
+import numpy as np
 from numpy import ndarray
 from torch import nn
 import torch.nn.functional as f
@@ -7,9 +9,13 @@ from node_box_processor import NodeBoxProcessor
 
 
 class DeepNetworkProcessor(NodeBoxProcessor):
-    def __init__(self, weights_file, predicted_timestamp, ws):
+    def __init__(self, weights_file, predicted_timestamp, input_size, time: bool):
+        self.time = time
         self.predicted_timestamp = predicted_timestamp
-        self.model = DeepModel(ws)
+        self.queue_price = deque(maxlen=input_size)
+        self.queue_time = deque(maxlen=input_size)
+        self.previous_timestamp = None
+        self.model = DeepModel(input_size)
         if weights_file is not None:
             self.model.load_state_dict(torch.load(weights_file))
         self.model.eval()
@@ -17,7 +23,23 @@ class DeepNetworkProcessor(NodeBoxProcessor):
     def process(self, timestamp, features: ndarray) -> (int, float):
         """Process the data and return the result as a tuple of (timestamp, result).
         The timestamp is the timestamp of when the result is predicted for """
-        return int(timestamp) + int(self.predicted_timestamp), self.predict(features).item()
+        if self.previous_timestamp is None or timestamp - self.previous_timestamp > 60*60*10:
+            for _ in range(self.queue_price.maxlen):
+                self.queue_price.append(features[0])
+                if self.time:
+                    self.queue_time.append(features[1])
+        else:
+            self.queue_price.append(features[0])
+            if self.time:
+                self.queue_time.append(features[1])
+
+        self.previous_timestamp = timestamp
+
+        ml_array = np.array(self.queue_price)
+        if self.time:
+            ml_array += np.array(self.queue_time)
+
+        return int(timestamp) + int(self.predicted_timestamp), self.predict(ml_array).item()
 
     def predict(self, features: ndarray):
         with torch.no_grad():
