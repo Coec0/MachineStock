@@ -1,3 +1,4 @@
+import numpy
 import numpy as np
 
 
@@ -5,7 +6,8 @@ class SmartSync:
     def __init__(self, ws, number_of_nodes):
         self.ws = ws
         self.number_of_nodes = number_of_nodes
-        self.collector1 = np.zeros([ws, number_of_nodes + 1])  # First position represents the int_div of ws
+        self.collector1 = np.full([ws, number_of_nodes + 1], np.NaN)  # First position represents the int_div of ws
+        self.collector1[:, 0] = 0
 
     #  node_number should start at 0
     #  Returns all values as an numpy array for the current timestamp if it is full, else None
@@ -16,7 +18,7 @@ class SmartSync:
         if self.collector1[arr_pos][0] < int_div:  # Clear row if cycled through array
             self.collector1[arr_pos][0] = int_div
             for i in range(self.number_of_nodes):
-                self.collector1[arr_pos][i + 1] = 0
+                self.collector1[arr_pos][i + 1] = np.NaN
         elif self.collector1[arr_pos][0] > int_div:  # If int_div is from previous cycle
             return None
 
@@ -28,7 +30,4 @@ class SmartSync:
 
     @staticmethod
     def __collector_row_filled(row):
-        for item in row:
-            if item == 0:
-                return False
-        return True
+        return not numpy.isnan(row).any()
