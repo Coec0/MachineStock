@@ -43,5 +43,5 @@ processor7 = VolatilityProcessor(30)
 t7 = threading.Thread(target=start_node_box, args=(0, 1, processor7, file_all))
 t7.start()
 
-processor_final = CombinerProcessor(None, 0, 7)
+processor_final = CombinerProcessor(None, 7)
 start_node_box(1, 7, processor_final)

@@ -6,8 +6,7 @@ from node_box_processor import NodeBoxProcessor
 
 
 class CombinerProcessor(NodeBoxProcessor):
-    def __init__(self, weights_file, predicted_timestamp, input_size):
-        self.predicted_timestamp = predicted_timestamp
+    def __init__(self, weights_file, input_size):
         self.model = CombinerModel(input_size)
         if weights_file is not None:
             self.model.load_state_dict(torch.load(weights_file))
@@ -18,7 +17,7 @@ class CombinerProcessor(NodeBoxProcessor):
         The timestamp is the timestamp of when the result is predicted for
 
         features: price, ema, rsi, macd, volatility, channels"""
-        return int(timestamp) + int(self.predicted_timestamp), self.predict(features).item()
+        return int(timestamp) , self.predict(features).item()
 
     def predict(self, features: ndarray):
         with torch.no_grad():
