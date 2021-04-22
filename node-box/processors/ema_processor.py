@@ -1,4 +1,4 @@
-from node_box_processor import NodeBoxProcessor
+from processors.node_box_processor import NodeBoxProcessor
 from numpy import ndarray
 from collections import deque
 

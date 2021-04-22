@@ -2,7 +2,7 @@ import torch
 from numpy import ndarray
 from torch import nn
 import torch.nn.functional as f
-from node_box_processor import NodeBoxProcessor
+from processors.node_box_processor import NodeBoxProcessor
 
 
 class CombinerProcessor(NodeBoxProcessor):
