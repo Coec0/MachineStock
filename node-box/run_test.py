@@ -2,8 +2,8 @@ from coordinator import Coordinator
 from coordinator_strategies.fully_connected_strategy import FullyConnectedStrategy
 from nodebox import NodeBox
 import threading
-from deep_network_processor import DeepNetworkProcessor
-from combiner_processor import CombinerProcessor
+from processors.deep_network_processor import DeepNetworkProcessor
+from processors.combiner_processor import CombinerProcessor
 
 
 def start_node_box(layer, input_size, processor, file=None):

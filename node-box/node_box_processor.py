@@ -1,5 +1,4 @@
 from numpy import ndarray
-from torch import float32
 
 
 class NodeBoxProcessor:
