@@ -3,32 +3,30 @@ from coordinator_strategies.fully_connected_strategy import FullyConnectedStrate
 from nodebox import NodeBox
 import threading
 from deep_network_processor import DeepNetworkProcessor
+from combiner_processor import CombinerProcessor
 
 
-def start_node_box(layer, weight_file, input_size, timestamp_future, time, file=None):
-    processor = DeepNetworkProcessor(weight_file, timestamp_future, input_size, time)
+def start_node_box(layer, input_size, processor, file=None):
     if file is None:
-        NodeBox("localhost", 5500, layer, 3, processor, file)
+        NodeBox("localhost", 5501, layer, 3, processor, file)
     else:
-        NodeBox("localhost", 5500, layer, input_size, processor, file)
+        NodeBox("localhost", 5501, layer, input_size, processor, file)
 
 
-#file1 = "x_Swedbank_A_70_p_fullnormalized_ema_rsi_macd_volatility_channels_time.csv"
-#file2 = "x_Swedbank_A_200_p_fullnormalized_ema_rsi_macd_volatility_channels_time.csv"
-#file3 = "x_Swedbank_A_700_p_fullnormalized_ema_rsi_macd_volatility_channels_time.csv"
 file_all = "x_Swedbank_A_1_p_fullnormalized.csv"
 weight_file1 = "dist-models/Swedbank_A/layer1/70_Deep_30s_35_512_price_1e-06_True/model_dict.pt"
 weight_file2 = "dist-models/Swedbank_A/layer1/200_Deep_30s_5_512_price_1e-06_False/model_dict.pt"
 weight_file3 = "dist-models/Swedbank_A/layer1/700_Deep_30s_35_512_price_1e-06_False/model_dict.pt"
-Coordinator(5500, 4, FullyConnectedStrategy())
-t1 = threading.Thread(target=start_node_box, args=(0, weight_file1, 140, 30, True, file_all))
+Coordinator(5501, 4, FullyConnectedStrategy())
+processor1 = DeepNetworkProcessor(weight_file1, 30, 140, True)
+t1 = threading.Thread(target=start_node_box, args=(0, 140, processor1, file_all))
 t1.start()
-t2 = threading.Thread(target=start_node_box, args=(0, weight_file2, 200, 30, False, file_all))
+processor2 = DeepNetworkProcessor(weight_file2, 30, 200, False)
+t2 = threading.Thread(target=start_node_box, args=(0, 200, processor2, file_all))
 t2.start()
-t3 = threading.Thread(target=start_node_box, args=(0, weight_file3, 700, 30, False, file_all))
+processor3 = DeepNetworkProcessor(weight_file3, 30, 700, False)
+t3 = threading.Thread(target=start_node_box, args=(0, 700, processor3, file_all))
 t3.start()
-start_node_box(1, None, 3, 0, False)
-#l1_0.connect("localhost", 12348)
-#l1_1 = NodeBox(12346, "1", 1)
 
-#l2 = NodeBox(12347, "2", 2)
+processor_final = CombinerProcessor(None, 0, 3)
+start_node_box(1, 3, processor_final)
