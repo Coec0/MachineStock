@@ -9,7 +9,7 @@ class VolatilityProcessor(NodeBoxProcessor):
 
     def __init__(self, window_size):
         self.window_size = window_size
-        self.window = deque(window_size)
+        self.window = deque(maxlen=window_size)
         self.mean = 1
         self.var_sum = 1
 

@@ -25,5 +25,5 @@ class InputHandler:
         thread.start()
 
     def __process_arr(self, timestamp, arr):
-        self.observer.notify(self.processor.process(timestamp, arr))
+        self.observer.notify(self.processor.process(int(timestamp), arr))
 

@@ -14,7 +14,7 @@ class Coordinator:
         self.layer_dict = {}
         self.server_socket = socket.socket()
         self.server_socket.bind(('', port))
-        self.server_socket.listen(5)
+        self.server_socket.listen(99)
         self.server_thread = threading.Thread(target=self.__run_server)
         self.server_thread.start()
 

@@ -9,9 +9,8 @@ from node_box_processor import NodeBoxProcessor
 
 
 class DeepNetworkProcessor(NodeBoxProcessor):
-    def __init__(self, weights_file, predicted_timestamp, input_size, time: bool):
+    def __init__(self, weights_file, input_size, time: bool):
         self.time = time
-        self.predicted_timestamp = predicted_timestamp
         self.queue_price = deque(maxlen=input_size)
         self.queue_time = deque(maxlen=input_size)
         self.previous_timestamp = None
@@ -39,7 +38,7 @@ class DeepNetworkProcessor(NodeBoxProcessor):
         if self.time:
             ml_array += np.array(self.queue_time)
 
-        return int(timestamp) + int(self.predicted_timestamp), self.predict(ml_array).item()
+        return int(timestamp), self.predict(ml_array).item()
 
     def predict(self, features: ndarray):
         with torch.no_grad():

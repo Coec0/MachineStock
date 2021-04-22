@@ -43,7 +43,7 @@ class NetworkOutput(Observer):
         self.connections = []
         self.server_socket = socket.socket()
         self.server_socket.bind(('', port))
-        self.server_socket.listen(5)
+        self.server_socket.listen(99)
         self.server_thread = threading.Thread(target=self._run_server)
         self.server_thread.start()
 

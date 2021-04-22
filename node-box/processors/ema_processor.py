@@ -9,12 +9,12 @@ class EMAProcessor(NodeBoxProcessor):
         self.last_ema = 1
         self.window_size = window_size
         self.w = 2 / (self.window_size + 1)
-        self.window = deque(window_size)
+        self.window = deque(maxlen=window_size)
         self.use_minutes = use_minutes
         self.time = -1
 
     def process(self, timestamp, features: ndarray) -> (int, float):
-        self.append_data(self, timestamp, features)
+        self.append_data(timestamp, features)
         ema = self.last_ema
         for p in self.window:
             ema = self.w * p + (1-self.w) * ema
@@ -27,6 +27,6 @@ class EMAProcessor(NodeBoxProcessor):
         else:
             if self.time == -1:
                 self.time = timestamp
-            if timestamp > self.time + 60*self.windowsize:
+            if timestamp > self.time + 60*self.window_size:
                 self.ema["seg_start"] = timestamp
                 self.window.append(data[0])

@@ -15,7 +15,9 @@ class CombinerProcessor(NodeBoxProcessor):
 
     def process(self, timestamp, features: ndarray) -> (int, float):
         """Process the data and return the result as a tuple of (timestamp, result).
-        The timestamp is the timestamp of when the result is predicted for """
+        The timestamp is the timestamp of when the result is predicted for
+
+        features: price, ema, rsi, macd, volatility, channels"""
         return int(timestamp) + int(self.predicted_timestamp), self.predict(features).item()
 
     def predict(self, features: ndarray):
