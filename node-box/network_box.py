@@ -21,7 +21,6 @@ class InputThread(Thread):
                 self.c.close()
                 break
             data = json.loads(raw_data.decode("utf-8"))
-            print(data)
             self.input_handler.put(int(data["ts"]), int(data["id"]), float(data["data"]))
 
 
@@ -55,8 +54,9 @@ class NetworkOutput(Observer):
             self.connections.append(connection)
 
     def notify(self, result: (int, float)):
+        data = {"id": str(self.id),
+                "ts": str(result[0]),
+                "data": str(result[1])}
+        print(data)
         for c in self.connections:
-            data = {"id": str(self.id),
-                    "ts": str(result[0]),
-                    "data": str(result[1])}
             c.send(json.dumps(data).encode("utf-8"))
