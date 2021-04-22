@@ -10,7 +10,8 @@ class DeepNetworkProcessor(NodeBoxProcessor):
     def __init__(self, weights_file, predicted_timestamp, ws):
         self.predicted_timestamp = predicted_timestamp
         self.model = DeepModel(ws)
-        self.model.load_state_dict(torch.load(weights_file))
+        if weights_file is not None:
+            self.model.load_state_dict(torch.load(weights_file))
         self.model.eval()
 
     def process(self, timestamp, features: ndarray) -> (int, float):
