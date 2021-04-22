@@ -3,7 +3,7 @@ from numpy import ndarray
 from collections import deque
 
 
-class EmaProcessor(NodeBoxProcessor):
+class EMAProcessor(NodeBoxProcessor):
 
     def __init__(self, window_size, use_minutes=False):
         self.last_ema = 1
