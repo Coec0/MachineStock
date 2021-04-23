@@ -38,21 +38,15 @@ def catch_inference(file_x, file_y, path_to_model, filepath, cols_x, col_y, min,
     test_data_y = pd.DataFrame()
     test_timestamps = []
 
-    total_rows = sum(1 for _ in open(file_x, 'r'))
-    number_of_loops = int(total_rows/chunksize)
-    print("Number of chunks: " + str(number_of_loops))
-    current_loop = 0
     with pd.read_csv(file_x, sep=";", dtype="float32", converters = {'ts': int}, usecols = cols_x, chunksize=chunksize) as reader_x, pd.read_csv(file_y, sep=";", dtype="float32", converters = {'ts': int}, chunksize=chunksize, usecols=[col_y]) as reader_y:
         for chunk_x, chunk_y in zip(reader_x, reader_y):
-            print("Progress: " + "{:.2f}".format(100 * current_loop/number_of_loops) + "%")
-            if current_loop >= data_split_ratio * number_of_loops:
-                print(chunk_x.columns)
+            mask = chunk_x["ts"] > 1614560400 #First of march
+            chunk_x = chunk_x[mask]
+            chunk_y = chunk_y[mask]
+            if len(chunk_x) > 0:
                 test_timestamps.extend(chunk_x["ts"].values.tolist())
                 test_data_x = test_data_x.append(chunk_x.drop(["ts"], axis=1))
                 test_data_y = test_data_y.append(chunk_y)
-            current_loop += 1
-            del chunk_x
-            del chunk_y
 
     test_data_x = torch.tensor(test_data_x.values, dtype=torch.float32)
     test_data_y = torch.tensor(test_data_y.values, dtype=torch.float32)
@@ -72,15 +66,15 @@ def catch_inference(file_x, file_y, path_to_model, filepath, cols_x, col_y, min,
 
 path = "../../../node-box/layer2-train/"
 window_size = 70
-path_to_file_x = "Swedbank_A/x_Swedbank_A_"+str(window_size)+"_p_fullnormalized_ema_rsi_macd_volatility_channels_time.csv"
-path_to_file_y = "Swedbank_A/y_Swedbank_A_"+str(window_size)+"_fullnormalized.csv"
+path_to_file_x = "Swedbank_A/x_Swedbank_A_"+str(window_size)+"_p_fullnormalized_time.csv"
+path_to_file_y = "Swedbank_A/y_Swedbank_A_"+str(window_size)+"_fullnormalized_time.csv"
 
 path_to_model = "../../../node-box/dist-models/Swedbank_A/layer1/70_Deep_30s_35_512_price_1e-06_True/model.pt"
 #path_to_model = "../../../node-box/dist-models/Swedbank_A/layer1/200_Deep_30s_5_512_price_1e-06_False/model.pt"
 #path_to_model = "../../../node-box/dist-models/Swedbank_A/layer1/700_Deep_30s_35_512_price_1e-06_False/model.pt"
 
 #70 med tid
-cols_x = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 153]
+cols_x = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140]
 #200 no time
 #cols_x = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 413]
 #700 no time

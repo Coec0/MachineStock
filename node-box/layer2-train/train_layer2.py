@@ -1,12 +1,13 @@
+import io
+
 import torch.nn.functional as f
 import torch
 from torch import nn
 from torch.utils.data import TensorDataset
 from torch.utils.data import DataLoader
-import torch.nn.functional as F
 from torch import optim
-import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 #Params
 dtype = torch.cuda.FloatTensor
@@ -32,8 +33,6 @@ def evaluate_model(data, model, loss_fn):
 
 
 def train_model(model, train_data_loader, dev_data_loader, loss_fn, optimizer, epochrange):
-    train_avg_loss = 0
-    dev_avg_loss = 0
     for epoch in range(epochrange):
         losses = []
         model.train()
@@ -76,30 +75,71 @@ class CombinerModel(nn.Module):
         return y
 
 
-model = CombinerModel(3)
+model = CombinerModel(15)
 loss_fn = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
-epoch_range = 20
-batch_size = 128
+optimizer = optim.Adam(model.parameters(), lr=0.0001)
+epoch_range = 10
+batch_size = 512
 
 _data = pd.read_csv("data/dist-L2-traindata.csv", sep=";")
-split_index = round(0.8*len(_data))
-train_data = _data.loc[:split_index]
-eval_data = _data.loc[split_index:]
+train_dev_split_index = round(0.8*len(_data))
+dev_test_split_index = round(0.9*len(_data))
+train_data = _data.loc[:train_dev_split_index]
+eval_data = _data.loc[train_dev_split_index:dev_test_split_index]
+test_data = _data.loc[dev_test_split_index:]
 
 print(train_data.head())
+x_columns = ["pred70", "pred200", "pred700", "ema30", "macd", "rsi60", "volatility30",
+             "channel_k_min_1200", "channel_k_max_1200", "channel_m_min_1200", "channel_m_max_1200",
+             "channel_k_min_7200", "channel_k_max_7200", "channel_m_min_7200", "channel_m_max_7200"]
 
-train_data_x = torch.tensor(train_data[["pred70", "pred200", "pred700"]].values, dtype=torch.float32)
+train_data_x = torch.tensor(train_data[x_columns].values, dtype=torch.float32)
 train_data_y = torch.tensor(train_data[["target"]].values, dtype=torch.float32)
 train_data_t = TensorDataset(train_data_x, train_data_y)
 train_data_loader = DataLoader(train_data_t, batch_size=batch_size, drop_last=True)
 
-eval_data_x = torch.tensor(eval_data[["pred70", "pred200", "pred700"]].values, dtype=torch.float32)
+eval_data_x = torch.tensor(eval_data[x_columns].values, dtype=torch.float32)
 eval_data_y = torch.tensor(eval_data[["target"]].values, dtype=torch.float32)
 eval_data_t = TensorDataset(eval_data_x, eval_data_y)
 eval_data_loader = DataLoader(eval_data_t, batch_size=batch_size, drop_last=True)
 
+test_data_x = torch.tensor(test_data[x_columns].values, dtype=torch.float32)
+test_data_y = torch.tensor(test_data[["target"]].values, dtype=torch.float32)
+test_data_t = TensorDataset(test_data_x, test_data_y)
+test_data_loader = DataLoader(test_data_t, batch_size=batch_size)
+
 print("Starting training\n------------------------------------------\n")
 train_model(model, train_data_loader, eval_data_loader, loss_fn, optimizer, epoch_range)
-
 torch.save(model.state_dict(), "layer2_model_dist.pt")
+
+print("Testing model\n------------------------------------------\n")
+
+#x_avg = test_data_x[:, 0:window_size]
+#x_avg = torch.mean(x_avg, 1)
+
+loss, preds = evaluate_model(test_data_loader, model, loss_fn)
+print("\nTest loss: " + str(loss))
+
+plt.plot(list(range(len(preds))), preds, label="Predictions")
+plt.plot(list(range(len(preds))), test_data_y, label="Target")
+axes = plt.gca()
+#axes.set_xlim([159000,160000])
+plt.legend()
+plt.show()
+
+#plt.plot(list(range(100000,120000)), preds[100000:120000], label="Predictions")
+#plt.plot(list(range(100000,120000)), test_data_y[100000:120000], label="Target")
+#plt.plot(list(range(100000,120000)), x_avg[100000:120000], label="Avg price")
+#axes = plt.gca()
+#plt.legend()
+#axes.set_xlim([100000,120000])
+#plt.savefig(filepath+'avg.pdf')
+#plt.close()
+
+#plt.plot(list(range(len(preds))), preds, label="Predictions")
+#plt.plot(list(range(len(test_data_y))), test_data_y.tolist(), label="Target")
+#axes = plt.gca()
+#plt.legend()
+#plt.savefig(filepath+'whole.pdf')
+#plt.close()
+

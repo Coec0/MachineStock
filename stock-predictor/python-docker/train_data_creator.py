@@ -11,23 +11,22 @@ import decimal
 import sys
 import os
 
+
 def build_input_row(stock, data_processors, time, normalize, fullnormalize):
     stack = []
     min_max_tuple = None
-    #for stock in stocks:
     market_orders, market_times = data_processors[stock].get_window()
     market_orders = np.array(market_orders).ravel()
-    #market_times = np.array(market_times).ravel()
-    if(len(market_orders)>0):
+    market_times = np.array(market_times).ravel()
+    if len(market_orders) > 0:
         if normalize:
             market_orders, min_max_tuple = normalize_price_array(market_orders)
-        #market_times = normalize_time_array(market_times) #TODODODO
+        market_times = normalize_time_array(market_times)
         stack.extend(market_orders)
-        #stack.extend(market_times)
+        stack.extend(market_times)
 
-    #for stock in stocks:
     financial_models = list(data_processors[stock].get_financial_models(fullnormalize))
-    if(len(financial_models)>0):
+    if len(financial_models) > 0:
         stack.extend(financial_models)
     stack.append(int(time))
     return stack, min_max_tuple
@@ -72,8 +71,8 @@ def get_column_names(stock, params, dp):
     for i in range(params["window_size"]):
         for feature in params["market_order_features"]:
             cols.append(stock+"-"+feature+"-"+str(i))
-    #for i in range(params["window_size"]):
-        #cols.append(stock+"-time-"+str(i))
+    for i in range(params["window_size"]):
+        cols.append(stock+"-time-"+str(i))
     for model in params["financial_models"]:
         if model == "ema":
             cols.append(stock+"-ema12")
@@ -287,7 +286,7 @@ def create_train_data(params, _data):
 
 params = {
     "stocks" : ["Swedbank_A"],
-    "window_sizes" : [70, 200, 700],
+    "window_sizes" : [70],
     "financial_models" : [],
     "market_order_features" : ["price"],
     "threshold" : 0.0002,
@@ -303,7 +302,7 @@ data = pd.read_csv(datafile, sep=";", usecols=["price", "stock", "publication_ti
 for stock in params["stocks"]:
     param = {}
     param["fullnormalize"] = True
-    param["financial_models"] = ["ema", "rsi", "macd", "volatility", "channels"]
+    param["financial_models"] = []
     param["threshold"] = 0.0002
     param["stock"] = stock
     param["normalize"] = params["normalize"]
