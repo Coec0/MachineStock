@@ -17,3 +17,4 @@ cmake-build-debug/
 .idea/
 market-order-simulator/*.list
 stock-predictor/**/*.csv
+/node-box/x_Swedbank_A_1_p_fullnormalized.csv

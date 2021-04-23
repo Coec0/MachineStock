@@ -26,7 +26,7 @@ class RSIProcessor(NodeBoxProcessor):
                 sum_dw += x
         rs = sum_up / abs(sum_dw)
         rsi = 100 - (100 / (1 + rs))
-        return timestamp, rsi
+        return timestamp, rsi/100
 
     def append_data(self, timestamp, data):
         if self.time == -1:

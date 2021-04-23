@@ -28,5 +28,5 @@ class EMAProcessor(NodeBoxProcessor):
             if self.time == -1:
                 self.time = timestamp
             if timestamp > self.time + 60*self.window_size:
-                self.ema["seg_start"] = timestamp
+                self.time = timestamp
                 self.window.append(data[0])
