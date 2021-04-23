@@ -21,7 +21,7 @@ class InputThread(Thread):
                 self.c.close()
                 break
             data = json.loads(raw_data.decode("utf-8"))
-            self.input_handler.put(int(data["ts"]), int(data["id"]), data["data"])
+            self.input_handler.put(int(data["ts"]), data["data"], data["tag"])
 
 
 class NetworkInput:
@@ -38,7 +38,8 @@ class NetworkInput:
 
 
 class NetworkOutput(Observer):
-    def __init__(self, port, _id):
+    def __init__(self, port, _id, tag):
+        self.tag = tag
         self.id = _id
         self.connections = []
         self.server_socket = socket.socket()
@@ -56,6 +57,7 @@ class NetworkOutput(Observer):
     def notify(self, result: (int, list)):
         data = {"id": str(self.id),
                 "ts": str(result[0]),
+                "tag": self.tag,
                 "data": result[1]}
         print(data)
         for c in self.connections:

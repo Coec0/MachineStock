@@ -10,8 +10,8 @@ from processors.macd_processor import MACDProcessor
 from processors.volatility_processor import VolatilityProcessor
 
 
-def start_node_box(layer, input_size, processor, file=None):
-    NodeBox("localhost", 5501, layer, input_size, processor, file)
+def start_node_box(layer, input_size, processor, tag, file=None, tag_to_pos=None):
+    NodeBox("localhost", 5501, layer, input_size, processor, tag, tag_to_pos, file)
 
 
 file_all = "x_Swedbank_A_1_p_fullnormalized.csv"
@@ -20,28 +20,36 @@ weight_file2 = "dist-models/Swedbank_A/layer1/200_Deep_30s_5_512_price_1e-06_Fal
 weight_file3 = "dist-models/Swedbank_A/layer1/700_Deep_30s_35_512_price_1e-06_False/model_dict.pt"
 Coordinator(5501, 8, FullyConnectedStrategy())
 processor1 = DeepNetworkProcessor(weight_file1, 140, True)
-t1 = threading.Thread(target=start_node_box, args=(0, 2, processor1, file_all))
+t1 = threading.Thread(target=start_node_box, args=(0, 2, processor1, "price1", file_all))
 t1.start()
 processor2 = DeepNetworkProcessor(weight_file2, 200, False)
-t2 = threading.Thread(target=start_node_box, args=(0, 1, processor2, file_all))
+t2 = threading.Thread(target=start_node_box, args=(0, 1, processor2, "price2", file_all))
 t2.start()
 processor3 = DeepNetworkProcessor(weight_file3, 700, False)
-t3 = threading.Thread(target=start_node_box, args=(0, 1, processor3, file_all))
+t3 = threading.Thread(target=start_node_box, args=(0, 1, processor3, "price3", file_all))
 t3.start()
 
 # Financial indicators - features: price, ema, rsi, macd, volatility, channels
 processor4 = EMAProcessor(30, True)
-t4 = threading.Thread(target=start_node_box, args=(0, 1, processor4, file_all))
+t4 = threading.Thread(target=start_node_box, args=(0, 1, processor4, "ema", file_all))
 t4.start()
 processor5 = RSIProcessor(30, True)
-t5 = threading.Thread(target=start_node_box, args=(0, 1, processor5, file_all))
+t5 = threading.Thread(target=start_node_box, args=(0, 1, processor5, "rsi", file_all))
 t5.start()
 processor6 = MACDProcessor()
-t6 = threading.Thread(target=start_node_box, args=(0, 1, processor6, file_all))
+t6 = threading.Thread(target=start_node_box, args=(0, 1, processor6, "macd", file_all))
 t6.start()
 processor7 = VolatilityProcessor(30)
-t7 = threading.Thread(target=start_node_box, args=(0, 1, processor7, file_all))
+t7 = threading.Thread(target=start_node_box, args=(0, 1, processor7, "volatility", file_all))
 t7.start()
 
 processor_final = CombinerProcessor(None, 7)
-start_node_box(1, 7, processor_final)
+start_node_box(1, 7, processor_final, "final", tag_to_pos={
+    "price1": 0,
+    "price2": 1,
+    "price3": 2,
+    "ema": 3,
+    "rsi": 4,
+    "macd": 5,
+    "volatility": 6
+})

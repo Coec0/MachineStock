@@ -4,12 +4,13 @@ import json
 
 
 class NodeBox:
-    def __init__(self, coord_ip, coord_port, layer, input_size, processor, local_file=None, ws=10):
+    def __init__(self, coord_ip, coord_port, layer, input_size,
+                 processor, tag, tag_to_pos=None, local_file=None, ws=10):
         self.config = self.__fetch_coordinator_config(coord_ip, coord_port, layer)
         self.local_file = local_file
         print(self.config)
-        output_network = NetworkOutput(self.config["port"], self.config["id"])
-        input_handler = InputHandler(ws, input_size, processor, output_network)
+        output_network = NetworkOutput(self.config["port"], self.config["id"], tag)
+        input_handler = InputHandler(ws, input_size, tag_to_pos, processor, output_network)
         self.network_input = NetworkInput(input_handler)
         if local_file is not None:
             self.local_input = FileInput(local_file, input_handler, input_size)

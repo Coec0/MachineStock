@@ -8,16 +8,18 @@ from observer import Observer
 
 
 class InputHandler:
-    def __init__(self, ws, input_size, processor: NodeBoxProcessor, observer: Observer):
+    def __init__(self, ws, input_size, tag_to_pos: dict, processor: NodeBoxProcessor, observer: Observer):
         self.number_of_features = input_size
+        self.tag_to_pos = tag_to_pos
         self.smart_sync = SmartSync(ws, input_size)
         self.processor = processor
         self.observer = observer
 
-    def put(self, timestamp, node_number, values: list):
+    def put(self, timestamp, values: list, tag):
         arr = None
+        pos = self.tag_to_pos[tag]
         for value in values:
-            arr = self.smart_sync.put(timestamp, node_number, value)
+            arr = self.smart_sync.put(timestamp, pos, value)
         if arr is not None:
             thread = Thread(target=self.__process_arr, args=(timestamp, arr))
             thread.start()
