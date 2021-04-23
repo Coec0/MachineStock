@@ -15,11 +15,11 @@ class InputHandler:
         self.processor = processor
         self.observer = observer
 
-    def put(self, timestamp, values: list, tag):
+    def put(self, timestamp, values: list, tags: list):
         arr = None
-        pos = self.tag_to_pos[tag]
-        for value in values:
-            arr = self.smart_sync.put(timestamp, pos, value)
+        for i in range(len(values)):
+            pos = self.tag_to_pos[tags[i]]
+            arr = self.smart_sync.put(timestamp, pos, values[i])
         if arr is not None:
             thread = Thread(target=self.__process_arr, args=(timestamp, arr))
             thread.start()

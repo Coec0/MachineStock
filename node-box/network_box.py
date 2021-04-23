@@ -38,8 +38,8 @@ class NetworkInput:
 
 
 class NetworkOutput(Observer):
-    def __init__(self, port, _id, tag):
-        self.tag = tag
+    def __init__(self, port, _id, tags: list):
+        self.tags = tags
         self.id = _id
         self.connections = []
         self.server_socket = socket.socket()
@@ -57,7 +57,7 @@ class NetworkOutput(Observer):
     def notify(self, result: (int, list)):
         data = {"id": str(self.id),
                 "ts": str(result[0]),
-                "tag": self.tag,
+                "tag": self.tags,
                 "data": result[1]}
         print(data)
         for c in self.connections:
