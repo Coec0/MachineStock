@@ -8,6 +8,7 @@ from processors.ema_processor import EMAProcessor
 from processors.rsi_processor import RSIProcessor
 from processors.macd_processor import MACDProcessor
 from processors.volatility_processor import VolatilityProcessor
+from processors.channels_processor import ChannelsProcessor
 
 
 def start_node_box(layer, input_size, processor, tag, file=None, tag_to_pos=None):
@@ -18,7 +19,7 @@ file_all = "x_Swedbank_A_1_p_fullnormalized.csv"
 weight_file1 = "dist-models/Swedbank_A/layer1/70_Deep_30s_35_512_price_1e-06_True/model_dict.pt"
 weight_file2 = "dist-models/Swedbank_A/layer1/200_Deep_30s_5_512_price_1e-06_False/model_dict.pt"
 weight_file3 = "dist-models/Swedbank_A/layer1/700_Deep_30s_35_512_price_1e-06_False/model_dict.pt"
-Coordinator(5501, 8, FullyConnectedStrategy())
+Coordinator(5501, 10, FullyConnectedStrategy())
 processor1 = DeepNetworkProcessor(weight_file1, 140, True)
 t1 = threading.Thread(target=start_node_box, args=(0, 2, processor1, ["price1"], file_all))
 t1.start()
@@ -42,14 +43,32 @@ t6.start()
 processor7 = VolatilityProcessor(30)
 t7 = threading.Thread(target=start_node_box, args=(0, 1, processor7, ["volatility"], file_all))
 t7.start()
+processor8 = ChannelsProcessor(1200, True)
+t8 = threading.Thread(target=start_node_box, args=(0, 1, processor8,
+                                                   ["channel_k_min_1200", "channel_k_max_1200",
+                                                    "channel_m_min_1200", "channel_m_max_1200"], file_all))
+t8.start()
+processor9 = ChannelsProcessor(7200, True)
+t9 = threading.Thread(target=start_node_box, args=(0, 1, processor9,
+                                                   ["channel_k_min_7200", "channel_k_max_7200",
+                                                    "channel_m_min_7200", "channel_m_max_7200"], file_all))
+t9.start()
 
-processor_final = CombinerProcessor(None, 7)
-start_node_box(1, 7, processor_final, ["final"], tag_to_pos={
+processor_final = CombinerProcessor(None, 15)
+start_node_box(1, 15, processor_final, ["final"], tag_to_pos={
     "price1": 0,
     "price2": 1,
     "price3": 2,
     "ema": 3,
     "rsi": 4,
     "macd": 5,
-    "volatility": 6
+    "volatility": 6,
+    "channel_k_min_1200": 7,
+    "channel_k_max_1200": 8,
+    "channel_m_min_1200": 9,
+    "channel_m_max_1200": 10,
+    "channel_k_min_7200": 11,
+    "channel_k_max_7200": 12,
+    "channel_m_min_7200": 13,
+    "channel_m_max_7200": 14,
 })
