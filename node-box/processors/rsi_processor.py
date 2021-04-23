@@ -15,7 +15,7 @@ class RSIProcessor(NodeBoxProcessor):
         self.open_price = 0
         self.latest_price = 0
 
-    def process(self, timestamp, features: ndarray) -> (int, float):
+    def process(self, timestamp, features: ndarray) -> (int, list):
         self.append_data(timestamp, features)
         sum_up = 0
         sum_dw = 0.000001
@@ -26,7 +26,7 @@ class RSIProcessor(NodeBoxProcessor):
                 sum_dw += x
         rs = sum_up / abs(sum_dw)
         rsi = 100 - (100 / (1 + rs))
-        return timestamp, rsi/100
+        return timestamp, [rsi/100]
 
     def append_data(self, timestamp, data):
         if self.time == -1:

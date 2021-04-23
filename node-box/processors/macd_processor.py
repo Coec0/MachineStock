@@ -9,7 +9,7 @@ class MACDProcessor(NodeBoxProcessor):
         self.ema12 = EMAProcessor(12, True)
         self.ema26 = EMAProcessor(26, True)
 
-    def process(self, timestamp, features: ndarray) -> (int, float):
+    def process(self, timestamp, features: ndarray) -> (int, list):
         _, ema12 = self.ema12.process(timestamp, features)
         _, ema26 = self.ema26.process(timestamp, features)
-        return timestamp, ema12-ema26
+        return timestamp, [(ema12[0]-ema26[0])]

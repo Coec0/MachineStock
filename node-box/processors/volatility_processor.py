@@ -13,7 +13,7 @@ class VolatilityProcessor(NodeBoxProcessor):
         self.mean = 1
         self.var_sum = 1
 
-    def process(self, timestamp, features: ndarray) -> (int, float):
+    def process(self, timestamp, features: ndarray) -> (int, list):
         new_x = features[0]
         if len(self.window) == 0:
             old_x = new_x + 0.00001
@@ -28,4 +28,4 @@ class VolatilityProcessor(NodeBoxProcessor):
 
         self.window.append(new_x)
         volatility = math.sqrt(self.var_sum / (self.window_size - 1))
-        return timestamp, volatility
+        return timestamp, [volatility]

@@ -19,7 +19,7 @@ class DeepNetworkProcessor(NodeBoxProcessor):
             self.model.load_state_dict(torch.load(weights_file))
         self.model.eval()
 
-    def process(self, timestamp, features: ndarray) -> (int, float):
+    def process(self, timestamp, features: ndarray) -> (int, list):
         """Process the data and return the result as a tuple of (timestamp, result).
         The timestamp is the timestamp of when the result is predicted for """
         if self.previous_timestamp is None or timestamp - self.previous_timestamp > 60*60*10:
@@ -38,7 +38,7 @@ class DeepNetworkProcessor(NodeBoxProcessor):
         if self.time:
             ml_array += np.array(self.queue_time)
 
-        return int(timestamp), self.predict(ml_array).item()
+        return int(timestamp), [self.predict(ml_array).item()]
 
     def predict(self, features: ndarray):
         with torch.no_grad():

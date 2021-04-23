@@ -13,13 +13,13 @@ class EMAProcessor(NodeBoxProcessor):
         self.use_minutes = use_minutes
         self.time = -1
 
-    def process(self, timestamp, features: ndarray) -> (int, float):
+    def process(self, timestamp, features: ndarray) -> (int, list):
         self.append_data(timestamp, features)
         ema = self.last_ema
         for p in self.window:
             ema = self.w * p + (1-self.w) * ema
         self.last_ema = ema
-        return timestamp, ema
+        return timestamp, [ema]
 
     def append_data(self, timestamp, data):
         if not self.use_minutes:
