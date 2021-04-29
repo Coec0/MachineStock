@@ -13,12 +13,14 @@ import traceback
 
 
 def run(iterator):
-    file_x_const = "Swedbank_A/x_Swedbank_A_%_p_ema_rsi_macd_volatility_channels_time.csv"
-    file_y_const = "Swedbank_A/y_Swedbank_A_%.csv"
+    #file_x_const = "Swedbank_A/x_Swedbank_A_%_p_ema_rsi_macd_volatility_channels_time.csv"
+    #file_y_const = "Swedbank_A/y_Swedbank_A_%.csv"
 
-    file_x_const_norm = "Swedbank_A/x_Swedbank_A_%_p_fullnormalized_ema_rsi_macd_volatility_channels_time.csv"
-    file_y_const_norm = "Swedbank_A/y_Swedbank_A_%_fullnormalized.csv"
+    # file_x_const_norm = "Swedbank_A/x_Swedbank_A_%_p_fullnormalized_ema_rsi_macd_volatility_channels_time.csv"
+    # file_y_const_norm = "Swedbank_A/y_Swedbank_A_%_fullnormalized.csv"
 
+    file_x_const_norm = "Nordea_Bank_Abp/x_Nordea_Bank_Abp_%_p_time_fullnormalized.csv"
+    file_y_const_norm = "Nordea_Bank_Abp/y_Nordea_Bank_Abp_%_fullnormalized.csv"
     loss_fn = nn.MSELoss()
     result_frame = pd.DataFrame(
         columns=["stock", "avg-train-loss", "avg-val-loss", "avg-test-loss", "val-r2", "test-r2", "epochs",
@@ -64,7 +66,7 @@ def run(iterator):
             foldername = model.getName() + "_" + col_y_name + "_" + str(epoch) + "_" + str(
                 batch_size) + "_" + fin_ind + "_" + str(lr) + "_" + str(use_time) + normalized
 
-            filepath = "Swedbank_A/" + str(ws) + "/" + foldername + "/"
+            filepath = "Nordea_Bank_Abp/" + str(ws) + "/" + foldername + "/"
             min_norm = 121.0
             max_norm = 165.9
             if not os.path.exists(filepath):
@@ -77,16 +79,16 @@ def run(iterator):
                     result = trainbase.train(files_x, files_y, model, input_size, ws, loss_fn, optimizer, filepath,
                                              epoch, batch_size, cols_x, col_y)
                 train_loss, val_loss, test_loss, val_r2, test_r2 = result
-                row = ["Swedbank_A", train_loss, val_loss, test_loss, val_r2, test_r2, epoch, lr, fin_ind, col_y_name,
+                row = ["Nordea_Bank_Abp", train_loss, val_loss, test_loss, val_r2, test_r2, epoch, lr, fin_ind, col_y_name,
                        ws, batch_size, int(use_time)]
                 result_frame.loc[len(result_frame)] = row
 
         ts = str(int(datetime.now().timestamp()))
-        result_frame.to_csv("Swedbank_A/Swedbank_A_" + name + ts + ".csv", index=False)
+        result_frame.to_csv("Nordea_Bank_Abp/Nordea_Bank_Abp_" + name + ts + ".csv", index=False)
         print("Done")
     except:
         print("Error")
         traceback.print_exc()
         ts = str(int(datetime.now().timestamp()))
-        result_frame.to_csv("Swedbank_A/Swedbank_A_" + name + ts + ".csv", index=False)
+        result_frame.to_csv("Nordea_Bank_Abp/Nordea_Bank_Abp_" + name + ts + ".csv", index=False)
         shutil.rmtree(filepath)

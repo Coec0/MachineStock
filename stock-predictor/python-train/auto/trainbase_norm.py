@@ -22,7 +22,7 @@ import os
 #Params
 dtype = torch.cuda.FloatTensor
 device = torch.device('cuda:0')
-chunksize = 500000
+chunksize = 1000000
 data_split_ratio=0.8
 
 #input_size= 200
@@ -195,9 +195,11 @@ def train(files_x, files_y, model, input_size, window_size, loss_fn, optimizer, 
     test_data_loader = DataLoader(test_data, batch_size=512)
     loss, preds, r2 = evaluate_model(test_data_loader, model, loss_fn)
 
-    target = [from_norm(t, min, max) for t in test_data_y.flatten().tolist()]
-    preds = [from_norm(p, min, max) for p in preds]
-    x_avg = [from_norm(x, min, max) for x in x_avg.tolist()]
+    # target = [from_norm(t, min, max) for t in test_data_y.flatten().tolist()]
+    target = [t for t in test_data_y.flatten().tolist()]
+    # preds = [from_norm(p, min, max) for p in preds]
+    # x_avg = [from_norm(x, min, max) for x in x_avg.tolist()]
+    x_avg = [x for x in x_avg.tolist()]
 
     with io.open(filepath+"log.txt", "a", encoding="utf-8") as f:
         f.write("\n------\nTest loss: " + str(loss))

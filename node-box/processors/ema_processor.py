@@ -9,7 +9,11 @@ class EMAProcessor(NodeBoxProcessor):
         self.last_ema = 1
         self.window_size = window_size
         self.w = 2 / (self.window_size + 1)
-        self.window = deque(maxlen=window_size)
+        # Use 5s as resulution for ema
+        if use_minutes:
+            self.window = deque(maxlen=12*window_size)
+        else:
+            self.window = deque(maxlen=window_size)
         self.use_minutes = use_minutes
         self.time = -1
 
@@ -24,9 +28,6 @@ class EMAProcessor(NodeBoxProcessor):
     def append_data(self, timestamp, data):
         if not self.use_minutes:
             self.window.append(data[0])
-        else:
-            if self.time == -1:
-                self.time = timestamp
-            if timestamp > self.time + 60*self.window_size:
-                self.time = timestamp
-                self.window.append(data[0])
+        elif self.time == -1 or timestamp >= self.time + 5:
+            self.time = timestamp
+            self.window.append(data[0])

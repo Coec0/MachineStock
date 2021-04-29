@@ -17,13 +17,13 @@ def build_input_row(stock, data_processors, time, normalize, fullnormalize):
     min_max_tuple = None
     market_orders, market_times = data_processors[stock].get_window()
     market_orders = np.array(market_orders).ravel()
-    market_times = np.array(market_times).ravel()
+    #market_times = np.array(market_times).ravel()
     if len(market_orders) > 0:
         if normalize:
             market_orders, min_max_tuple = normalize_price_array(market_orders)
-        market_times = normalize_time_array(market_times)
+        #market_times = normalize_time_array(market_times)
         stack.extend(market_orders)
-        stack.extend(market_times)
+        #stack.extend(market_times)
 
     financial_models = list(data_processors[stock].get_financial_models(fullnormalize))
     if len(financial_models) > 0:
@@ -71,8 +71,8 @@ def get_column_names(stock, params, dp):
     for i in range(params["window_size"]):
         for feature in params["market_order_features"]:
             cols.append(stock+"-"+feature+"-"+str(i))
-    for i in range(params["window_size"]):
-        cols.append(stock+"-time-"+str(i))
+    #for i in range(params["window_size"]):
+        #cols.append(stock+"-time-"+str(i))
     for model in params["financial_models"]:
         if model == "ema":
             cols.append(stock+"-ema12")
@@ -110,9 +110,9 @@ def get_up_down_target(cur_price, fut_price, threshold):
     cur_price = float(cur_price)
     fut_price = float(fut_price)
     delta = threshold*cur_price
-    if(fut_price <= cur_price+delta and fut_price >= cur_price-delta):
+    if fut_price <= cur_price+delta and fut_price >= cur_price-delta:
         return 1
-    elif(fut_price < cur_price):
+    elif fut_price < cur_price:
         return 0
     else:
         return 2
@@ -131,7 +131,6 @@ def generate_x_name(params):
     if params["normalize"]:
         name += "_normalized"
 
-    #TODODODODODODOD#
     #name += "_time"
     name += "_fullnormalized"
 
@@ -285,8 +284,8 @@ def create_train_data(params, _data):
 
 
 params = {
-    "stocks" : ["Swedbank_A"],
-    "window_sizes" : [70],
+    "stocks" : ["Nordea_Bank_Abp"],
+    "window_sizes" : [200, 700],
     "financial_models" : [],
     "market_order_features" : ["price"],
     "threshold" : 0.0002,
