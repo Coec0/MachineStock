@@ -1,3 +1,4 @@
+import logging
 import threading
 from threading import Thread
 import socket
@@ -38,7 +39,8 @@ class NetworkInput:
 
 
 class NetworkOutput(Observer):
-    def __init__(self, port, _id, tags: list):
+    def __init__(self, port, _id, tags: list, logger: logging):
+        self.logger = logger
         self.tags = tags
         self.id = _id
         self.connections = []
@@ -51,7 +53,7 @@ class NetworkOutput(Observer):
     def _run_server(self):
         while True:
             connection, (ip, port) = self.server_socket.accept()
-            print(str(self.id) + ' got connection from ', (ip, port))
+            self.logger.info(str(self.id) + ' got connection from (' + str(ip) + ',' + str(port) + ')')
             self.connections.append(connection)
 
     def notify(self, result: (int, list)):
@@ -59,6 +61,6 @@ class NetworkOutput(Observer):
                 "ts": str(result[0]),
                 "tag": self.tags,
                 "data": result[1]}
-        print(data)
+        self.logger.info(data)
         for c in self.connections:
             c.send(json.dumps(data).encode("utf-8"))

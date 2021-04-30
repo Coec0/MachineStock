@@ -1,3 +1,5 @@
+import logging
+
 from coordinator import Coordinator
 from coordinator_strategies.fully_connected_strategy import FullyConnectedStrategy
 from nodebox import NodeBox
@@ -11,8 +13,8 @@ from processors.volatility_processor import VolatilityProcessor
 from processors.channels_processor import ChannelsProcessor
 
 
-def start_node_box(layer, input_size, processor, tag, file=None, tag_to_pos=None):
-    NodeBox("localhost", 5501, layer, input_size, processor, tag, tag_to_pos, file)
+def start_node_box(layer, input_size, processor, tag, file=None, tag_to_pos=None, verbosity=logging.WARNING):
+    NodeBox("localhost", 5501, layer, input_size, processor, tag, tag_to_pos, file, verbosity=verbosity)
 
 
 file_all = "x_Swedbank_A_1_p_fullnormalized.csv"
@@ -73,4 +75,4 @@ start_node_box(1, 15, processor_final, ["final"], tag_to_pos={
     "channel_k_max_7200": 12,
     "channel_m_min_7200": 13,
     "channel_m_max_7200": 14,
-})
+}, verbosity=logging.INFO)

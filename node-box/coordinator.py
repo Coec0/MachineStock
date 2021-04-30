@@ -1,11 +1,14 @@
 import json
+import logging
 import threading
 import socket
 from coordinator_strategies.strategy import Strategy
 
 
 class Coordinator:
-    def __init__(self, port, number_of_node_boxes, strategy: Strategy):
+    def __init__(self, port, number_of_node_boxes, strategy: Strategy, verbosity=logging.WARNING):
+        self.logger = logging.getLogger(str("Coordinator"))
+        self.logger.setLevel(verbosity)
         self.number_of_node_boxes = number_of_node_boxes
         self.strategy = strategy
         self.start_port = 49152
@@ -21,7 +24,7 @@ class Coordinator:
     def __run_server(self):
         while len(self.connections) < self.number_of_node_boxes:
             connection, (ip, port) = self.server_socket.accept()
-            print('Coordinator got connection from ', (ip, port))
+            self.logger.info('Coordinator got connection from (' + str(ip) + ',' + str(port) + ')')
             self.connections.append(connection)
             node_info = json.loads(connection.recv(1024).decode("utf-8"))
             node_info["local_ip"] = ip

@@ -1,3 +1,4 @@
+import logging
 from threading import Thread
 
 from numpy import ndarray
@@ -8,10 +9,12 @@ from observer import Observer
 
 
 class InputHandler:
-    def __init__(self, ws, input_size, tag_to_pos: dict, processor: NodeBoxProcessor, observer: Observer):
+    def __init__(self, ws, input_size, tag_to_pos: dict, processor: NodeBoxProcessor,
+                 observer: Observer, logger: logging):
+        self.logger = logger
         self.number_of_features = input_size
         self.tag_to_pos = tag_to_pos
-        self.smart_sync = SmartSync(ws, input_size)
+        self.smart_sync = SmartSync(ws, input_size, logger)
         self.processor = processor
         self.observer = observer
 

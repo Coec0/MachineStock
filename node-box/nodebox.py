@@ -1,22 +1,32 @@
 from network_box import *
 from file_input import FileInput
 import json
+import logging
 
 
 class NodeBox:
-    def __init__(self, coord_ip, coord_port, layer, input_size,
-                 processor, tag, tag_to_pos=None, local_file=None, ws=10):
+    def __init__(self, coord_ip, coord_port, layer, input_size, processor, tags: list, tag_to_pos=None,
+                 local_file=None, ws=10, verbosity=logging.WARNING):
         self.config = self.__fetch_coordinator_config(coord_ip, coord_port, layer)
         self.local_file = local_file
-        print(self.config)
-        output_network = NetworkOutput(self.config["port"], self.config["id"], tag)
-        input_handler = InputHandler(ws, input_size, tag_to_pos, processor, output_network)
+        self.tags = tags
+        logging.basicConfig(level=logging.NOTSET)
+        logger = logging.getLogger(str(tags))
+        logger.setLevel(verbosity)
+        print(str(logger))
+        logger.info(self.config)
+        output_network = NetworkOutput(self.config["port"], self.config["id"], tags, logger)
+        input_handler = InputHandler(ws, input_size, tag_to_pos, processor, output_network, logger)
         self.network_input = NetworkInput(input_handler)
         if local_file is not None:
+            logger.info("Found local file " + local_file)
             self.local_input = FileInput(local_file, input_handler, input_size)
         self.connect()
 
     def connect(self):
+        logger = logging.getLogger(str(self.tags))
+        logger.info(str(self.tags) + "Connecting to " + str(len(self.config["server_ip_port"])) + " servers")
+
         for ip, port in self.config["server_ip_port"]:
             self.network_input.connect(ip, port)
 
