@@ -7,6 +7,7 @@ from coordinator_strategies.strategy import Strategy
 
 class Coordinator:
     def __init__(self, port, number_of_node_boxes, strategy: Strategy, verbosity=logging.WARNING):
+        logging.basicConfig(level=logging.NOTSET)
         self.logger = logging.getLogger(str("Coordinator"))
         self.logger.setLevel(verbosity)
         self.number_of_node_boxes = number_of_node_boxes
@@ -16,8 +17,9 @@ class Coordinator:
         self.connections = []
         self.layer_dict = {}
         self.server_socket = socket.socket()
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_socket.bind(('', port))
-        self.server_socket.listen(99)
+        self.server_socket.listen(number_of_node_boxes+1)
         self.server_thread = threading.Thread(target=self.__run_server)
         self.server_thread.start()
 

@@ -8,7 +8,7 @@ from threading import Thread
 
 class FileInput:
 
-    def __init__(self, file, input_handler: InputHandler, input_size, reads_per_second=10):
+    def __init__(self, file, input_handler: InputHandler, input_size, reads_per_second=1):
         self.reads_per_second = reads_per_second
         self.file = file
         self.input_handler = input_handler

@@ -31,6 +31,7 @@ class NetworkInput:
 
     def connect(self, ip, port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.settimeout(30)
         sock.connect((ip, port))
         sock.settimeout(None)
@@ -45,6 +46,7 @@ class NetworkOutput(Observer):
         self.id = _id
         self.connections = []
         self.server_socket = socket.socket()
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_socket.bind(('', port))
         self.server_socket.listen(99)
         self.server_thread = threading.Thread(target=self._run_server)

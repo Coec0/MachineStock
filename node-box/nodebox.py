@@ -41,5 +41,6 @@ class NodeBox:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((coord_ip, coord_port))
         sock.send(json.dumps({"layer": layer}).encode("utf-8"))
-        return json.loads(sock.recv(1024).decode("utf-8"))
+        data = sock.recv(65536).decode("utf-8")
+        return json.loads(data)
 
