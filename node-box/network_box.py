@@ -22,7 +22,8 @@ class InputThread(Thread):
                 self.c.close()
                 break
             data = json.loads(raw_data.decode("utf-8"))
-            self.input_handler.put(int(data["ts"]), data["data"], data["tag"])
+            start_time = data.get("start_time") or -1
+            self.input_handler.put(int(data["ts"]), data["data"], data["tag"], float(start_time))
 
 
 class NetworkInput:
@@ -58,11 +59,13 @@ class NetworkOutput(Observer):
             self.logger.info(str(self.id) + ' got connection from (' + str(ip) + ',' + str(port) + ')')
             self.connections.append(connection)
 
-    def notify(self, result: (int, list)):
+    def notify(self, result: (int, list), start_time=-1):
         data = {"id": str(self.id),
                 "ts": str(result[0]),
                 "tag": self.tags,
                 "data": result[1]}
+        if start_time != -1:
+            data["start_time"] = start_time
         self.logger.info(data)
         for c in self.connections:
             c.send(json.dumps(data).encode("utf-8"))

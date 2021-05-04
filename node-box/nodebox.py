@@ -6,7 +6,7 @@ import logging
 
 class NodeBox:
     def __init__(self, coord_ip, coord_port, layer, input_size, processor, tags: list, tag_to_pos=None,
-                 local_file=None, ws=10, verbosity=logging.WARNING):
+                 local_file=None, ws=10, verbosity=logging.WARNING, benchmark=False):
         self.config = self.__fetch_coordinator_config(coord_ip, coord_port, layer)
         self.local_file = local_file
         self.tags = tags
@@ -20,7 +20,7 @@ class NodeBox:
         self.network_input = NetworkInput(input_handler)
         if local_file is not None:
             logger.info("Found local file " + local_file)
-            self.local_input = FileInput(local_file, input_handler, input_size)
+            self.local_input = FileInput(local_file, input_handler, input_size, benchmark=benchmark)
         self.connect()
 
     def connect(self):
