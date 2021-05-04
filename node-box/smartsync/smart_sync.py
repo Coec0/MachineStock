@@ -11,7 +11,7 @@ class SmartSync:
         self.number_of_nodes = number_of_nodes
         self.collector1 = np.full([ws, number_of_nodes + 1], np.NaN)  # First position represents the int_div of ws
         self.collector1[:, 0] = 0
-        self.non_nan_in_row = np.zeros(number_of_nodes)
+        self.non_nan_in_row = np.zeros(ws)
 
     #  node_number should start at 0
     #  Returns all values as an numpy array for the current timestamp if it is full, else None

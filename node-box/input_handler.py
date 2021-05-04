@@ -1,6 +1,7 @@
 import logging
 import time
 from threading import Thread
+from stat_track import StatTrack
 from numpy import ndarray
 from smartsync.smart_sync import SmartSync
 from processors.node_box_processor import NodeBoxProcessor
@@ -14,9 +15,13 @@ class InputHandler:
         self.number_of_features = input_size
         self.tag_to_pos = tag_to_pos
         self.smart_sync = SmartSync(ws, input_size, logger)
-        self.benchmark_sync = SmartSync(ws, input_size, logger)
+        self.benchmark_sync = SmartSync(ws, input_size, None)
         self.processor = processor
         self.observer = observer
+        self.benchmark_stat_tracks = []
+        for i in range(input_size):
+            self.benchmark_stat_tracks.append(StatTrack())
+        self.number_of_benchmarks_to_skip = 10
 
     def put(self, timestamp, values: list, tags: list, start_time=-1):
         arr = None
@@ -37,12 +42,17 @@ class InputHandler:
     def __process_arr(self, timestamp, arr, start_time=-1, start_times=None):
         self.observer.notify(self.processor.process(int(timestamp), arr), start_time=start_time)
         if start_times is not None:
-            current_time = time.time()
-            mean = 0
-            for count, time_start in enumerate(start_times):
-                print("Time difference of "+str(count)+": "+str(current_time - time_start))
-                mean += time_start/len(start_times)
-            print("Longest time: "+str(current_time-min(start_times)))
-            print("Shortest time: " + str(current_time-max(start_times)))
-            print("Mean time: "+str(current_time-mean))
+            if self.number_of_benchmarks_to_skip == 0:
+                current_time = time.time()
+                for count, time_start in enumerate(start_times):
+                    self.benchmark_stat_tracks[count].add(current_time - time_start)
+                if len(self.benchmark_stat_tracks[0]) % 60 == 0:
+                    for count, stat in enumerate(self.benchmark_stat_tracks):
+                        longest, shortest, mean, deviation = stat.get()
+                        print("Longest time "+str(count)+": "+str(longest))
+                        print("Shortest time "+str(count)+": "+str(shortest))
+                        print("Mean time "+str(count)+": "+str(mean))
+                        print("Standard deviation " + str(count) + ": " + str(deviation))
+            else:
+                self.number_of_benchmarks_to_skip -= 1
 
