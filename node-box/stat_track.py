@@ -19,5 +19,6 @@ class StatTrack:
         self.numbers.append(number)
 
     def get(self):
-        return self.max_val, self.min_val, mean(self.numbers), pstdev(self.numbers)
+        local = list(self.numbers)  # Make a copy to avoid exception is something is added to self.numbers
+        return self.max_val, self.min_val, mean(local), pstdev(local)
 

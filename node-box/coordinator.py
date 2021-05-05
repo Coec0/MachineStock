@@ -1,4 +1,5 @@
 import json
+import time
 import logging
 import threading
 import socket
@@ -56,8 +57,10 @@ class Coordinator:
         self.__return_strategy()
 
     def __return_strategy(self):
+        start_time = time.time()
         for c in self.connections:
             for layer in self.layer_dict.values():
                 for node in layer:
                     if (node["local_ip"], node["local_port"]) == c.getpeername():
                         c.send(json.dumps(node).encode("utf-8"))
+        print("Coordinator sent all configs in "+str(time.time() - start_time)+" seconds")

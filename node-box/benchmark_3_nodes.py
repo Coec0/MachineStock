@@ -24,12 +24,18 @@ weight_file2 = "dist-models/Swedbank_A/layer1/200_Deep_30s_5_512_price_1e-06_Fal
 weight_file3 = "dist-models/Swedbank_A/layer1/700_Deep_30s_35_512_price_1e-06_False/model_dict.pt"
 weight_file_layer2 = "dist-models/Swedbank_A/layer2/layer2_model_dist.pt"
 
-boxes = 2
+boxes = 4
 Coordinator(5501, boxes, FullyConnectedStrategy())
 
+processor1 = DeepNetworkProcessor(weight_file1, 140, True)
+t1 = threading.Thread(target=start_node_box, args=(0, 2, processor1, ["price1"], file_all))
+t1.start()
 processor2 = DeepNetworkProcessor(weight_file2, 200, False)
 t2 = threading.Thread(target=start_node_box, args=(0, 1, processor2, ["price2"], file_all))
 t2.start()
+processor3 = DeepNetworkProcessor(weight_file3, 700, False)
+t3 = threading.Thread(target=start_node_box, args=(0, 1, processor3, ["price3"], file_all))
+t3.start()
 
 processor_final = CombinerProcessor(None, boxes-1)
 start_node_box(1, boxes-1, processor_final, ["final"], tag_to_pos={

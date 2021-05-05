@@ -18,9 +18,9 @@ class InputHandler:
         self.benchmark_sync = SmartSync(ws, input_size, None)
         self.processor = processor
         self.observer = observer
-        self.benchmark_stat_tracks = []
-        for i in range(input_size):
-            self.benchmark_stat_tracks.append(StatTrack())
+        self.benchmark_stat_tracks = StatTrack()
+        self.benchmark_waiting_track = [0]*input_size
+        self.benchmark_waiting_stat_track = StatTrack()
         self.number_of_benchmarks_to_skip = 10
 
     def put(self, timestamp, values: list, tags: list, start_time=-1):
@@ -31,6 +31,7 @@ class InputHandler:
             arr = self.smart_sync.put(timestamp, pos, values[i])
             if start_time != -1:
                 benchmark_arr = self.benchmark_sync.put(timestamp, pos, start_time)
+                self.benchmark_waiting_track[pos % self.number_of_features] = time.time()
         if arr is not None:
             thread = Thread(target=self.__process_arr, args=(timestamp, arr, -1, benchmark_arr))
             thread.start()
@@ -45,14 +46,20 @@ class InputHandler:
             if self.number_of_benchmarks_to_skip == 0:
                 current_time = time.time()
                 for count, time_start in enumerate(start_times):
-                    self.benchmark_stat_tracks[count].add(current_time - time_start)
-                if len(self.benchmark_stat_tracks[0]) % 60 == 0:
-                    for count, stat in enumerate(self.benchmark_stat_tracks):
-                        longest, shortest, mean, deviation = stat.get()
-                        print("Longest time "+str(count)+": "+str(longest))
-                        print("Shortest time "+str(count)+": "+str(shortest))
-                        print("Mean time "+str(count)+": "+str(mean))
-                        print("Standard deviation " + str(count) + ": " + str(deviation))
+                    self.benchmark_stat_tracks.add(current_time - time_start)
+                    self.benchmark_waiting_stat_track.add(current_time - self.benchmark_waiting_track[count])
+                if len(self.benchmark_stat_tracks) % (300*self.number_of_features) == 0:
+                    longest, shortest, mean, deviation = self.benchmark_stat_tracks.get()
+                    print("Longest time: "+str(longest))
+                    print("Shortest time: "+str(shortest))
+                    print("Mean time: "+str(mean))
+                    print("Standard deviation: " + str(deviation) + "\n")
+                    longest, shortest, mean, deviation = self.benchmark_waiting_stat_track.get()
+                    print("Waiting times in smart-sync:")
+                    print("Longest time: " + str(longest))
+                    print("Shortest time: " + str(shortest))
+                    print("Mean time: " + str(mean))
+                    print("Standard deviation: " + str(deviation) + "\n")
             else:
                 self.number_of_benchmarks_to_skip -= 1
 
