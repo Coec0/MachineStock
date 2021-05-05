@@ -15,7 +15,7 @@ class Coordinator:
         self.strategy = strategy
         self.start_port = 49152
         self.start_id = 0
-        self.connections = []
+        self.connections = {}
         self.layer_dict = {}
         self.server_socket = socket.socket()
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -28,7 +28,7 @@ class Coordinator:
         while len(self.connections) < self.number_of_node_boxes:
             connection, (ip, port) = self.server_socket.accept()
             self.logger.info('Coordinator got connection from (' + str(ip) + ',' + str(port) + ')')
-            self.connections.append(connection)
+            self.connections[(ip, port)] = connection
             node_info = json.loads(connection.recv(1024).decode("utf-8"))
             node_info["local_ip"] = ip
             node_info["local_port"] = port
@@ -58,9 +58,8 @@ class Coordinator:
 
     def __return_strategy(self):
         start_time = time.time()
-        for c in self.connections:
-            for layer in self.layer_dict.values():
-                for node in layer:
-                    if (node["local_ip"], node["local_port"]) == c.getpeername():
-                        c.send(json.dumps(node).encode("utf-8"))
+        for layer in self.layer_dict.values():
+            for node in layer:
+                c = self.connections[(node["local_ip"], node["local_port"])]
+                c.send(json.dumps(node).encode("utf-8"))
         print("Coordinator sent all configs in "+str(time.time() - start_time)+" seconds")
