@@ -7,10 +7,12 @@ from coordinator_strategies.strategy import Strategy
 
 
 class Coordinator:
-    def __init__(self, port, number_of_node_boxes, strategy: Strategy, verbosity=logging.WARNING):
+    def __init__(self, port, number_of_node_boxes, strategy: Strategy, verbosity=logging.WARNING,
+                 sync_time_factor=0.02):
         logging.basicConfig(level=logging.NOTSET)
         self.logger = logging.getLogger(str("Coordinator"))
         self.logger.setLevel(verbosity)
+        self.sync_time_factor = sync_time_factor
         self.number_of_node_boxes = number_of_node_boxes
         self.strategy = strategy
         self.start_port = 49152
@@ -20,7 +22,7 @@ class Coordinator:
         self.server_socket = socket.socket()
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_socket.bind(('', port))
-        self.server_socket.listen(number_of_node_boxes+1)
+        self.server_socket.listen(number_of_node_boxes + 1)
         self.server_thread = threading.Thread(target=self.__run_server)
         self.server_thread.start()
 
@@ -58,8 +60,10 @@ class Coordinator:
 
     def __return_strategy(self):
         start_time = time.time()
+        sync_time = start_time + (self.sync_time_factor * self.number_of_node_boxes)
         for layer in self.layer_dict.values():
             for node in layer:
+                node["sync_time"] = sync_time
                 c = self.connections[(node["local_ip"], node["local_port"])]
                 c.send(json.dumps(node).encode("utf-8"))
-        print("Coordinator sent all configs in "+str(time.time() - start_time)+" seconds")
+        print("Coordinator sent all configs in " + str(time.time() - start_time) + " seconds")

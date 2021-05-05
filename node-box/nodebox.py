@@ -1,3 +1,5 @@
+import time
+
 from network_box import *
 from file_input import FileInput
 import json
@@ -21,6 +23,9 @@ class NodeBox:
         if local_file is not None:
             logger.info("Found local file " + local_file)
             self.local_input = FileInput(local_file, input_handler, input_size, benchmark=benchmark)
+
+        # Wait for sync until starting
+        time.sleep(max(0.0, float(self.config["sync_time"])-time.time()))
         self.connect()
 
     def connect(self):
