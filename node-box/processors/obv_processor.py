@@ -11,6 +11,7 @@ class OBVProcessor(NodeBoxProcessor):
         self.seg_len = segment_length
         self.time = -1
 
+
     def process(self, timestamp, features: ndarray) -> (int, list):
         price = features[0]
         volume = features[1]

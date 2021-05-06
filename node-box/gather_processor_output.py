@@ -4,6 +4,7 @@ from processors.macd_processor import MACDProcessor
 from processors.obv_processor import OBVProcessor
 from processors.volatility_processor import VolatilityProcessor
 from processors.channels_processor import ChannelsProcessor
+from processors.klinger_processor import KlingerProcessor
 import numpy as np
 import pandas as pd
 # Financial indicators - features: price, ema, rsi, macd, volatility, channels
@@ -26,7 +27,8 @@ dir_path = "layer2-train/data/"
 
 processors = [#["channels1day", ["channel_k_min_86400", "channel_k_max_86400","channel_m_min_86400", "channel_m_max_86400"], ChannelsProcessor(86400, True)],
               #["channels2hour", ["channel_k_min_7200", "channel_k_max_7200","channel_m_min_7200", "channel_m_max_7200"], ChannelsProcessor(7200, True)]]
-              ["obv1", ["obv1"], OBVProcessor(1)]
+              #["obv1", ["obv1"], OBVProcessor(1)]
+               ["klinger", ["klinger"], KlingerProcessor()]
               #["rsi5", ["rsi5"], RSIProcessor(5)]
               #("macd", MACDProcessor()),
               #["volatility100", ["volatility100"], VolatilityProcessor(100)]

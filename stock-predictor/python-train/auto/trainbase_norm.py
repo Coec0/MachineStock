@@ -25,16 +25,6 @@ device = torch.device('cuda:0')
 chunksize = 1000000
 data_split_ratio=0.8
 
-#input_size= 200
-#batch_size= 512
-#nbr_epochs= 20
-#lr = 0.0001
-#save_model_epochs = [5, 10, 20, 100, 500]
-#model_name = "models/Swedbank"
-#y_column = "5s"
-#files_x = ["../python-docker/Swedbank_A/x_Swedbank_A_200_p_channels.csv",]
-#files_y = ["../python-docker/Swedbank_A/5_y_Swedbank_A_200.csv",]
-
 
 def splitData(xs, ys, trainRatio):
     t = round(len(xs)*trainRatio)
@@ -117,7 +107,6 @@ def train_model(model, train_data_loader, dev_data_loader, loss_fn, optimizer, e
     r2 = 0
     for epoch in range(epochrange):
         losses = []
-        n_correct = 0
         model.train()
         for x, y in train_data_loader:
             y = y.type(dtype).squeeze()
@@ -142,7 +131,6 @@ def train_model(model, train_data_loader, dev_data_loader, loss_fn, optimizer, e
     log_file.close()
     return train_avg_loss, dev_avg_loss, r2
 
-# In[52]:
 
 def train_chunk(model, loss_fn, optimizer, epochrange, x_data, y_data, data_split_ratio, batch_size, filepath):
     train_data, dev_data = splitData(x_data, y_data, data_split_ratio)
@@ -150,56 +138,61 @@ def train_chunk(model, loss_fn, optimizer, epochrange, x_data, y_data, data_spli
     dev_data_loader = DataLoader(dev_data, batch_size=batch_size, drop_last=True)
     return train_model(model, train_data_loader, dev_data_loader, loss_fn, optimizer, epochrange, batch_size, filepath)
 
-def from_norm(x, min_x, max_x):
-    return (x*(max_x-min_x+0.0000001)+min_x)
 
-#Start training
-def train(files_x, files_y, model, input_size, window_size, loss_fn, optimizer, filepath, epochrange, batch_size, cols_x, col_y, min, max):
+def from_norm(x, avg, stdev):
+    return x * (stdev+0.000001) + avg
+
+
+def train(file_x, file_y, model, input_size, window_size, loss_fn, optimizer, filepath, epochrange, batch_size, cols_x):
     model = model.to(device)
     test_data_x = pd.DataFrame()
     test_data_y = pd.DataFrame()
     last_epoch_train_loss = []
     last_epoch_val_loss = []
     last_epoch_r2 = []
-    for i in range(len(files_x)):
-        print("Current file: " + files_x[i])
-        total_rows = sum(1 for row in open(files_x[i], 'r'))
-        number_of_loops = int(total_rows/chunksize)
-        print("Number of chunks: " + str(number_of_loops))
-        current_loop = 0
-        with pd.read_csv(files_x[i], sep=";", dtype="float32", usecols = cols_x, chunksize=chunksize) as reader_x, pd.read_csv(files_y[i], sep=";", dtype="float32", converters = {'ts': int}, chunksize=chunksize, usecols=[col_y]) as reader_y:
-            for chunk_x, chunk_y in zip(reader_x, reader_y):
-                print("Progress: " + "{:.2f}".format(100 * current_loop/number_of_loops) + "%")
-                if(current_loop < data_split_ratio * number_of_loops):
-                    train_avg_loss, dev_avg_loss, r2 = train_chunk(model, loss_fn, optimizer, epochrange, chunk_x, chunk_y, data_split_ratio, batch_size,filepath)
-                    last_epoch_train_loss.append(train_avg_loss)
-                    last_epoch_val_loss.append(dev_avg_loss)
-                    last_epoch_r2.append(r2)
-                else:
-                    print("Append test data")
-                    test_data_x = test_data_x.append(chunk_x)
-                    test_data_y = test_data_y.append(chunk_y)
-                current_loop+=1
-                del chunk_x
-                del chunk_y
+    print("Current file: " + file_x)
+    total_rows = sum(1 for row in open(file_x, 'r'))
+    number_of_loops = int(total_rows/chunksize)
+    print("Number of chunks: " + str(number_of_loops))
+    current_loop = 0
+    with pd.read_csv(file_x, sep=";", dtype="float32", usecols = cols_x, chunksize=chunksize) as reader_x, pd.read_csv(file_y, sep=";", dtype="float32", chunksize=chunksize) as reader_y:
+        for chunk_x, chunk_y in zip(reader_x, reader_y):
+            print("Progress: " + "{:.2f}".format(100 * current_loop/number_of_loops) + "%")
+            if current_loop < data_split_ratio * number_of_loops:
+                train_avg_loss, dev_avg_loss, r2 = train_chunk(model, loss_fn, optimizer, epochrange, chunk_x, chunk_y["30s"], data_split_ratio, batch_size,filepath)
+                last_epoch_train_loss.append(train_avg_loss)
+                last_epoch_val_loss.append(dev_avg_loss)
+                last_epoch_r2.append(r2)
+            else:
+                print("Append test data")
+                test_data_x = test_data_x.append(chunk_x)
+                test_data_y = test_data_y.append(chunk_y)
+            current_loop += 1
+            del chunk_x
+            del chunk_y
 
     torch.save(model, filepath+"model.pt")
-
     test_data_x = torch.tensor(test_data_x.values, dtype=torch.float32)
-    test_data_y = torch.tensor(test_data_y.values, dtype=torch.float32)
-    test_data = TensorDataset(test_data_x, test_data_y)
+    test_data_y_ = torch.tensor(test_data_y["30s"].values, dtype=torch.float32)
+    test_data = TensorDataset(test_data_x, test_data_y_)
 
     x_avg = test_data_x[:, 0:window_size]
     x_avg = torch.mean(x_avg, 1)
 
     test_data_loader = DataLoader(test_data, batch_size=512)
-    loss, preds, r2 = evaluate_model(test_data_loader, model, loss_fn)
+    loss, preds_, r2 = evaluate_model(test_data_loader, model, loss_fn)
 
-    # target = [from_norm(t, min, max) for t in test_data_y.flatten().tolist()]
-    target = [t for t in test_data_y.flatten().tolist()]
-    # preds = [from_norm(p, min, max) for p in preds]
-    # x_avg = [from_norm(x, min, max) for x in x_avg.tolist()]
-    x_avg = [x for x in x_avg.tolist()]
+    x_avg = x_avg.tolist()
+    target = []
+    preds = []
+    test_data_y = test_data_y.to_numpy()
+    for i in range(len(test_data_y)):
+        (t, avg, stdev, _) = test_data_y[i]
+        p = preds_[i]
+        target.append(from_norm(t, avg, stdev))
+        preds.append(from_norm(p, avg, stdev))
+        x_avg[i] = from_norm(x_avg[i], avg, stdev)
+
 
     with io.open(filepath+"log.txt", "a", encoding="utf-8") as f:
         f.write("\n------\nTest loss: " + str(loss))
@@ -208,7 +201,6 @@ def train(files_x, files_y, model, input_size, window_size, loss_fn, optimizer, 
     plt.plot(list(range(159000, 160000)), preds[159000:160000], label="Predictions")
     plt.plot(list(range(159000, 160000)), target[159000:160000], label="Target")
     axes = plt.gca()
-    #axes.set_xlim([159000,160000])
     plt.legend()
     plt.savefig(filepath+'zoom.pdf')
     plt.close()
