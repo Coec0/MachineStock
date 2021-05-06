@@ -1,3 +1,4 @@
+import logging
 import threading
 from threading import Thread
 import socket
@@ -21,7 +22,8 @@ class InputThread(Thread):
                 self.c.close()
                 break
             data = json.loads(raw_data.decode("utf-8"))
-            self.input_handler.put(int(data["ts"]), data["data"], data["tag"])
+            start_time = data.get("start_time") or -1
+            self.input_handler.put(int(data["ts"]), data["data"], data["tag"], float(start_time))
 
 
 class NetworkInput:
@@ -30,6 +32,7 @@ class NetworkInput:
 
     def connect(self, ip, port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.settimeout(30)
         sock.connect((ip, port))
         sock.settimeout(None)
@@ -38,11 +41,13 @@ class NetworkInput:
 
 
 class NetworkOutput(Observer):
-    def __init__(self, port, _id, tags: list):
+    def __init__(self, port, _id, tags: list, logger: logging):
+        self.logger = logger
         self.tags = tags
         self.id = _id
         self.connections = []
         self.server_socket = socket.socket()
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_socket.bind(('', port))
         self.server_socket.listen(99)
         self.server_thread = threading.Thread(target=self._run_server)
@@ -51,14 +56,16 @@ class NetworkOutput(Observer):
     def _run_server(self):
         while True:
             connection, (ip, port) = self.server_socket.accept()
-            print(str(self.id) + ' got connection from ', (ip, port))
+            self.logger.info(str(self.id) + ' got connection from (' + str(ip) + ',' + str(port) + ')')
             self.connections.append(connection)
 
-    def notify(self, result: (int, list)):
+    def notify(self, result: (int, list), start_time=-1):
         data = {"id": str(self.id),
                 "ts": str(result[0]),
                 "tag": self.tags,
                 "data": result[1]}
-        print(data)
+        if start_time != -1:
+            data["start_time"] = start_time
+        self.logger.info(data)
         for c in self.connections:
             c.send(json.dumps(data).encode("utf-8"))

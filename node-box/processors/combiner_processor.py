@@ -1,3 +1,5 @@
+import math
+
 import torch
 from numpy import ndarray
 from torch import nn
@@ -31,9 +33,9 @@ class CombinerModel(nn.Module):
         super().__init__()
         self.fc1 = nn.Linear(input_size, input_size*2).type(data_type)
         self.fc1.weight.data.uniform_(-0.1, 0.1)
-        self.fc2 = nn.Linear(input_size*2, round(input_size*0.5)).type(data_type)
+        self.fc2 = nn.Linear(input_size*2, math.ceil(input_size*0.5)).type(data_type)
         self.fc2.weight.data.uniform_(-0.1, 0.1)
-        self.fc3 = nn.Linear(round(input_size*0.5), 1).type(data_type)
+        self.fc3 = nn.Linear(math.ceil(input_size*0.5), 1).type(data_type)
         self.fc3.weight.data.uniform_(-0.1, 0.1)
 
     def forward(self, x):
