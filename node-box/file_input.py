@@ -1,3 +1,4 @@
+import math
 import time
 
 import numpy
@@ -24,9 +25,6 @@ class FileInput:
         next(csv_file)  # Skip CSV headers'
         start_time = -1
         while True:
-            time.sleep(1/self.reads_per_second)
-            if self.benchmark:
-                start_time = time.time()
 
             line = csv_file.readline()
 
@@ -34,6 +32,11 @@ class FileInput:
                 break
             arr = line.split(";")
             arr = [float(i) for i in arr]
+            #print(str(time.time()) + " : " + str(arr[-1]))
+            time.sleep(math.ceil(time.time())-time.time())
+
+            if self.benchmark:
+                start_time = time.time()
             self.input_handler.put_all(arr[-1], numpy.array(arr[:self.input_size]), start_time=start_time)
 
 

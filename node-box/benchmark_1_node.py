@@ -1,4 +1,6 @@
 import logging
+import sys
+import time
 
 from coordinator import Coordinator
 from coordinator_strategies.fully_connected_strategy import FullyConnectedStrategy
@@ -24,28 +26,11 @@ weight_file2 = "dist-models/Swedbank_A/layer1/200_Deep_30s_5_512_price_1e-06_Fal
 weight_file3 = "dist-models/Swedbank_A/layer1/700_Deep_30s_35_512_price_1e-06_False/model_dict.pt"
 weight_file_layer2 = "dist-models/Swedbank_A/layer2/layer2_model_dist.pt"
 
-boxes = 2
-Coordinator(5501, boxes, FullyConnectedStrategy())
+_tag = sys.argv[1]
+boxes = 1
+#Coordinator(5501, boxes, FullyConnectedStrategy())
 
-processor2 = DeepNetworkProcessor(weight_file2, 200, False)
-t2 = threading.Thread(target=start_node_box, args=(0, 1, processor2, ["price2"], file_all))
+time.sleep(3)
+processor2 = DeepNetworkProcessor(None, 200, False)
+t2 = threading.Thread(target=start_node_box, args=(0, 1, processor2, [_tag], file_all))
 t2.start()
-
-processor_final = CombinerProcessor(None, boxes-1)
-start_node_box(1, boxes-1, processor_final, ["final"], tag_to_pos={
-    "price1": 0,
-    "price2": 1,
-    "price3": 2,
-    "ema": 3,
-    "rsi": 4,
-    "macd": 5,
-    "volatility": 6,
-    "channel_k_min_1200": 7,
-    "channel_k_max_1200": 8,
-    "channel_m_min_1200": 9,
-    "channel_m_max_1200": 10,
-    "channel_k_min_7200": 11,
-    "channel_k_max_7200": 12,
-    "channel_m_min_7200": 13,
-    "channel_m_max_7200": 14,
-}, verbosity=logging.WARNING)

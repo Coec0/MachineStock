@@ -1,4 +1,5 @@
 import logging
+import sys
 import time
 
 from coordinator import Coordinator
@@ -22,18 +23,18 @@ def start_node_box(layer, input_size, processor_local, tag_local, file=None, tag
             benchmark=True)
 
 
-layer_1_size = 4
-Coordinator(5501, layer_1_size + 1, FullyConnectedStrategy(), logging.WARNING)
+if len(sys.argv) > 1:
+    layer_1_size = int(sys.argv[1])
+else:
+    layer_1_size = 4
+Coordinator(5501, layer_1_size + 1, FullyConnectedStrategy(), logging.DEBUG)
 file_all = "x_Swedbank_A_1_p_fullnormalized.csv"
 weight_file = "dist-models/Swedbank_A/layer1/70_Deep_30s_35_512_price_1e-06_True/model_dict.pt"
 processor = DeepNetworkProcessor(weight_file, 140, True)
 tag_to_pos_layer2 = {}
 for i in range(layer_1_size):
-    tag = "price"+str(i)
+    tag = "price"+str(i+1)
     tag_to_pos_layer2[tag] = i
-    t = threading.Thread(target=start_node_box, args=(0, 2, processor, [tag], file_all, None))
-    t.start()
-    time.sleep(0.01)
 
 weight_file_layer2 = "dist-models/Swedbank_A/layer2/layer2_model_dist.pt"
 processor_final = CombinerProcessor(None, layer_1_size)
