@@ -1,18 +1,18 @@
 import logging
 import threading
-from threading import Thread
+from multiprocessing import Process
 import socket
 import json
 from observer import Observer
 from input_handler import InputHandler
 
 
-class InputThread(Thread):
-    def __init__(self, connection, input_handler: InputHandler, size=1024):
-        Thread.__init__(self)
+class InputThread(Process):
+    def __init__(self, connection, ih: InputHandler, size=1024):
+        Process.__init__(self)
         self.c = connection
         self.size = size
-        self.input_handler = input_handler
+        self.input_handler = ih
 
     def run(self):
         while True:
@@ -23,6 +23,7 @@ class InputThread(Thread):
                 break
             data = json.loads(raw_data.decode("utf-8"))
             start_time = data.get("start_time") or -1
+
             self.input_handler.put(int(data["ts"]), data["data"], data["tag"], float(start_time))
 
 

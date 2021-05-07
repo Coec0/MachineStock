@@ -23,13 +23,13 @@ class CombinerProcessor(NodeBoxProcessor):
 
     def predict(self, features: ndarray):
         with torch.no_grad():
-            x = torch.tensor(features).type(torch.cuda.FloatTensor)
+            x = torch.tensor(features).type(torch.FloatTensor)
             return self.model(x)
 
 
 class CombinerModel(nn.Module):
     def __init__(self, input_size):
-        data_type = torch.cuda.FloatTensor
+        data_type = torch.FloatTensor
         super().__init__()
         self.fc1 = nn.Linear(input_size, input_size*2).type(data_type)
         self.fc1.weight.data.uniform_(-0.1, 0.1)

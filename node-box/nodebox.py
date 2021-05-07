@@ -1,9 +1,13 @@
 import time
+from multiprocessing import shared_memory, Lock, RLock
+
+import numpy as np
 
 from network_box import *
 from file_input import FileInput
 import json
 import logging
+from smartsync.smart_sync import SmartSync
 
 
 class NodeBox:
@@ -17,8 +21,14 @@ class NodeBox:
         logger.setLevel(verbosity)
         print(str(logger))
         logger.info(self.config)
+
+        name_collector1, name_non_nan_in_row1 = SmartSync.get_shared_memory_names(ws, input_size)
+        name_collector2, name_non_nan_in_row2 = SmartSync.get_shared_memory_names(ws, input_size)
+
         output_network = NetworkOutput(self.config["port"], self.config["id"], tags, logger)
-        input_handler = InputHandler(ws, input_size, tag_to_pos, processor, output_network, logger)
+        input_handler = InputHandler(ws, input_size, tag_to_pos, processor, output_network, logger, name_collector1,
+                                     name_non_nan_in_row1, name_collector2,
+                                     name_non_nan_in_row2, Lock())
         self.network_input = NetworkInput(input_handler)
         if local_file is not None:
             logger.info("Found local file " + local_file)

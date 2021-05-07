@@ -22,7 +22,7 @@ def start_node_box(layer, input_size, processor_local, tag_local, file=None, tag
             benchmark=True)
 
 
-layer_1_size = 500
+layer_1_size = 1
 Coordinator(5501, layer_1_size + 1, FullyConnectedStrategy(), logging.WARNING)
 file_all = "x_Swedbank_A_1_p_fullnormalized.csv"
 weight_file = "dist-models/Swedbank_A/layer1/70_Deep_30s_35_512_price_1e-06_True/model_dict.pt"
