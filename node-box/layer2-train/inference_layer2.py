@@ -29,14 +29,29 @@ def evaluate_model(data, model, loss_fn):
     return avg_loss, predictions
 
 
-def calc_loss(preds, target, loss_fn):
-    with torch.no_grad():
-        losses = []
-        for p, t in zip(preds, target):
-            p = p.squeeze()
-            t = t.squeeze()
-            losses.append(loss_fn(p, t).item())
-    return sum(losses)/len(losses)
+def calc_losses(preds, target, avg_y):
+    target_tensor = torch.tensor(target, dtype=torch.float32)
+    preds_tensor = torch.tensor(preds, dtype=torch.float32)
+    loss_fn_mse = nn.MSELoss()
+    loss_fn_mae = nn.L1Loss()
+    mse_loss_preds = loss_fn_mse(preds_tensor, target_tensor).item()
+    mae_loss_preds = loss_fn_mae(preds_tensor, target_tensor).item()
+
+    avg_10min = torch.tensor(avg_y.values, dtype=torch.float32)
+    loss_fn_mse = nn.MSELoss()
+    loss_fn_mae = nn.L1Loss()
+    mse_loss_10min = loss_fn_mse(avg_10min, target_tensor).item()
+    mae_loss_10min = loss_fn_mae(avg_10min, target_tensor).item()
+
+    target_for_offset = torch.tensor(target[:-30], dtype=torch.float32)
+    offset = torch.tensor(target[30:], dtype=torch.float32)
+    loss_fn_mse = nn.MSELoss()
+    loss_fn_mae = nn.L1Loss()
+    mse_loss_offset = loss_fn_mse(offset, target_for_offset).item()
+    mae_loss_offset = loss_fn_mae(offset, target_for_offset).item()
+
+    return mse_loss_preds, mae_loss_preds, mse_loss_10min, mae_loss_10min, mse_loss_offset, mae_loss_offset
+
 
 
 class CombinerModel(nn.Module):
@@ -48,6 +63,24 @@ class CombinerModel(nn.Module):
         self.fc2 = nn.Linear(input_size*2, round(input_size*0.5)).type(data_type)
         self.fc2.weight.data.uniform_(-0.1, 0.1)
         self.fc3 = nn.Linear(round(input_size*0.5), 1).type(data_type)
+        self.fc3.weight.data.uniform_(-0.1, 0.1)
+
+    def forward(self, x):
+        x = f.leaky_relu(self.fc1(x))
+        x = f.leaky_relu(self.fc2(x))
+        y = f.leaky_relu(self.fc3(x))
+        return y
+
+
+class CombinerModel_3(nn.Module):
+    def __init__(self, input_size):
+        data_type = torch.cuda.FloatTensor
+        super().__init__()
+        self.fc1 = nn.Linear(input_size, input_size*3).type(data_type)
+        self.fc1.weight.data.uniform_(-0.1, 0.1)
+        self.fc2 = nn.Linear(input_size*3, round(input_size)).type(data_type)
+        self.fc2.weight.data.uniform_(-0.1, 0.1)
+        self.fc3 = nn.Linear(round(input_size), 1).type(data_type)
         self.fc3.weight.data.uniform_(-0.1, 0.1)
 
     def forward(self, x):
@@ -68,17 +101,33 @@ class CombinerModel_2(nn.Module):
         x = f.leaky_relu(self.fc1(x))
         return x
 
-model = CombinerModel_2(7)
-model.load_state_dict(torch.load("layer2_nochannel_dist.pt"))
+
+def from_norm(x, avg, stdev):
+    return x * (stdev+0.000001) + avg
+
+
+def denorm(preds_, test_data_y):
+    preds = []
+    target = []
+    test_data_y_ = test_data_y.to_numpy()
+    for i in range(len(test_data_y_)):
+        (t, avg, stdev) = test_data_y_[i]
+        target.append(from_norm(t, avg, stdev))
+        preds.append(from_norm(preds_[i], avg, stdev))
+    return preds, target
+
+
+model = CombinerModel_3(4)#CombinerModel_3_['ema15', 'macd', 'rsi5', 'rsi30', 'volatility100', 'volatility50']_lr0.001_NordeaPred70
+model.load_state_dict(torch.load("data/auto/models/CombinerModel_3_volatility50_lr0.01_None._state_dict.pt"))
 
 loss_fn = nn.MSELoss()
 batch_size = 512
-
-_data = pd.read_csv("data/dist-L2-traindata.csv", sep=";")
+#SwedbankPred70;SwedbankPred200;SwedbankPred700;NordeaPred70;NordeaPred200;NordeaPred700;ema30;ema15;macd;rsi5;rsi30;volatility100;volatility50;target;avg;stdev;ts
+_data = pd.read_csv("data/Swedbank_A_dist2_train_zscore_Nordea.csv", sep=";")
 dev_test_split_index = round(0.9*len(_data))
 test_data = _data.loc[dev_test_split_index:]
 
-x_columns = ["pred70", "pred200", "pred700", "ema30", "macd", "rsi5", "volatility100"]
+x_columns = ["SwedbankPred70","SwedbankPred200","SwedbankPred700", "volatility50"] # "ema30", "macd", "rsi5",
              #"channel_k_min_1200", "channel_k_max_1200", "channel_m_min_1200", "channel_m_max_1200",
              #"channel_k_min_7200", "channel_k_max_7200", "channel_m_min_7200", "channel_m_max_7200"]
 
@@ -91,25 +140,28 @@ test_data_loader = DataLoader(test_data_t, batch_size=batch_size)
 print("Testing model\n------------------------------------------")
 
 loss, preds = evaluate_model(test_data_loader, model, loss_fn)
-print("\nTest loss: " + "{:0.8f}".format(loss))
+#print("\nTest loss: " + "{:0.8f}".format(loss))
 
-preds70 = test_data_x[:, 0]
-preds200 = test_data_x[:, 1]
-preds700 = test_data_x[:, 2]
+test_data_y_ = test_data[["target", "avg", "stdev"]]
+preds70,_ = denorm(test_data_x[:, 0].numpy(), test_data_y_)
+preds200,_ = denorm(test_data_x[:, 1].numpy(), test_data_y_)
+preds700,_ = denorm(test_data_x[:, 2].numpy(), test_data_y_)
 
-print("\nPreds70 loss: {:0.8f}".format(calc_loss(preds70, test_data_y, loss_fn)))
-print("Preds200 loss: {:0.8f}".format(calc_loss(preds200, test_data_y, loss_fn)))
-print("Preds700 loss: {:0.8f}".format(calc_loss(preds700, test_data_y, loss_fn)))
+preds, target = denorm(preds, test_data_y_)
 
-ema30 = test_data_x[:, 3]
-macd = test_data_x[:, 4]
-rsi = test_data_x[:, 5]
-volatility = test_data_x[:, 6]
+mse_loss_preds, mae_loss_preds, mse_loss_10min, mae_loss_10min, mse_loss_offset, mae_loss_offset = calc_losses(preds, target, test_data["avg"])
+mse_loss_preds70, mae_loss_preds70, mse_loss_10min70, mae_loss_10min70, mse_loss_offset70, mae_loss_offset70 = calc_losses(preds70, target, test_data["avg"])
+mse_loss_preds200, mae_loss_preds200, mse_loss_10min200, mae_loss_10min200, mse_loss_offset200, mae_loss_offset200 = calc_losses(preds200, target, test_data["avg"])
+mse_loss_preds700, mae_loss_preds700, mse_loss_10min700, mae_loss_10min700, mse_loss_offset700, mae_loss_offset700 = calc_losses(preds700, target, test_data["avg"])
 
+row ="{:.5f}".format(mse_loss_preds) + ";" + "{:.5f}".format(
+    mae_loss_preds) + ";" + "{:.5f}".format(mse_loss_preds70) + ";" + "{:.5f}".format(
+    mae_loss_preds70) + ";" + "{:.5f}".format(mse_loss_preds200) + ";" + "{:.5f}".format(mae_loss_preds200)  + ";" + "{:.5f}".format(mse_loss_preds700)+ ";" + "{:.5f}".format(mae_loss_preds700)
 
+print(row)
 # Plot test predictions
 plt.plot(list(range(len(preds))), preds, label="Predictions")
-plt.plot(list(range(len(preds))), test_data_y, label="Target")
+plt.plot(list(range(len(preds))), target, label="Target")
 plt.plot(list(range(len(preds))), preds70, label="Pred70")
 plt.plot(list(range(len(preds))), preds200, label="preds200")
 plt.plot(list(range(len(preds))), preds700, label="preds700")

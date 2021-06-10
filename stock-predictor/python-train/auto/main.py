@@ -19,7 +19,7 @@ def run(stock, iterator):
 
 
     result_frame = pd.DataFrame(
-        columns=["stock", "avg-train-loss", "avg-val-loss", "avg-test-loss", "val-r2", "test-r2", "epochs",
+        columns=["stock", "avg-train-loss", "avg-val-loss", "avg-test-loss", "mse_loss_preds", "mae_loss_preds", "mse_loss_10min", "mae_loss_10min", "mse_loss_offset", "mae_loss_offset", "epochs",
                  "learning-rate", "x-col", "y-col", "window-size", "batch-size", "use-time"])
     try:
         for params in iterator:
@@ -48,8 +48,8 @@ def run(stock, iterator):
                 result = trainbase_norm.train(file_x, file_y, model, input_size, ws, loss_fn, optimizer, filepath,
                                               epoch,
                                               batch_size, cols_x)
-                train_loss, val_loss, test_loss, val_r2, test_r2 = result
-                row = [stock, train_loss, val_loss, test_loss, val_r2, test_r2, epoch, lr, fin_ind, col_y_name,
+                train_loss, val_loss, test_loss, mse_loss_preds, mae_loss_preds, mse_loss_10min, mae_loss_10min, mse_loss_offset, mae_loss_offset = result
+                row = [stock, train_loss, val_loss, test_loss, mse_loss_preds, mae_loss_preds, mse_loss_10min, mae_loss_10min, mse_loss_offset, mae_loss_offset, epoch, lr, fin_ind, col_y_name,
                        ws, batch_size, int(use_time)]
                 result_frame.loc[len(result_frame)] = row
 

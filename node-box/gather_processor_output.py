@@ -8,30 +8,29 @@ from processors.klinger_processor import KlingerProcessor
 import numpy as np
 import pandas as pd
 # Financial indicators - features: price, ema, rsi, macd, volatility, channels
-#data_file = "x_Swedbank_A_1_p_fullnormalized.csv"
-data_file = "Swedbank_A_vol_price.csv"
+data_file = "x_Swedbank_A_1_zscore_time.csv"
 
-df = pd.read_csv(data_file, sep=";")
+df = pd.read_csv(data_file, sep=";", usecols=["SwedbankPrice", "ts", "SwedbankAvg", "SwedbankStdev"])
 df = df[df["ts"] >= 1614585602]
-
-print(df.head())
 
 def gen_rows(df):
     for row in df.itertuples(index=False):
         yield row._asdict()
 
+def from_norm(x, avg, stdev):
+    return x * (stdev+0.000001) + avg
 
-data_generator = gen_rows(df)
 
+# ["obv1", ["obv1"], OBVProcessor(1)]
+# ["klinger", ["klinger"], KlingerProcessor()]
 dir_path = "layer2-train/data/"
 
-processors = [#["channels1day", ["channel_k_min_86400", "channel_k_max_86400","channel_m_min_86400", "channel_m_max_86400"], ChannelsProcessor(86400, True)],
-              #["channels2hour", ["channel_k_min_7200", "channel_k_max_7200","channel_m_min_7200", "channel_m_max_7200"], ChannelsProcessor(7200, True)]]
-              #["obv1", ["obv1"], OBVProcessor(1)]
-               ["klinger", ["klinger"], KlingerProcessor()]
-              #["rsi5", ["rsi5"], RSIProcessor(5)]
-              #("macd", MACDProcessor()),
-              #["volatility100", ["volatility100"], VolatilityProcessor(100)]
+processors = [#["channels30min_tmp", ["channel_k_min_1800", "channel_k_max_1800","channel_m_min_1800", "channel_m_max_1800"], ChannelsProcessor(1800, True)],
+              #["channels2hour_tmp", ["channel_k_min_7200", "channel_k_max_7200","channel_m_min_7200", "channel_m_max_7200"], ChannelsProcessor(7200, True)]
+              ["rsi30", ["rsi30"], RSIProcessor(30)],
+              ["ema15", ["ema15"], EMAProcessor(15, True)],
+              #["macd", ["macd"], MACDProcessor()],
+              ["volatility50", ["volatility50"], VolatilityProcessor(50)]
              ]
 
 for n, hds, _ in processors:
@@ -41,11 +40,17 @@ for n, hds, _ in processors:
     file.write("ts\n")
     file.close()
 
-for d in data_generator:
-    for n, _, p in processors:
-        ts, outputs = p.process(int(d["ts"]), np.array([float(d["SwedbankPrice"]), float(d["volume"])]))
-        file = open(dir_path + "/" + n + ".csv", "a")
+for n, _, p in processors:
+    print("Working on " + n)
+    output = ""
+    data_generator = gen_rows(df)
+    for d in data_generator:
+        price = float(from_norm(d["SwedbankPrice"], d["SwedbankAvg"], d["SwedbankStdev"]))
+        time = int(d["ts"])
+        ts, outputs = p.process(time, [price])
         for x in outputs:
-            file.write(str(x)+";")
-        file.write(str(ts)+"\n")
-        file.close()
+            output += str(x) + ";"
+        output += str(ts) + "\n"
+    file = open(dir_path + n + ".csv", "a")
+    file.write(output)
+    file.close()

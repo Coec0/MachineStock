@@ -7,6 +7,7 @@ from torch.utils.data import TensorDataset
 from torch.utils.data import DataLoader
 from torch import optim
 import pandas as pd
+import math
 import matplotlib.pyplot as plt
 
 #Params
@@ -47,6 +48,8 @@ def train_model(model, train_data_loader, dev_data_loader, loss_fn, optimizer, e
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
+            tmp = sum(losses)/len(losses)
+
 
         # Compute accuracy and loss in the entire training set
         train_avg_loss = sum(losses)/len(losses)
@@ -90,9 +93,13 @@ class CombinerModel_3(nn.Module):
         self.fc3.weight.data.uniform_(-0.1, 0.1)
 
     def forward(self, x):
+        if torch.isinf(x).any():
+            print("hej")
         x = f.leaky_relu(self.fc1(x))
         x = f.leaky_relu(self.fc2(x))
         y = f.leaky_relu(self.fc3(x))
+        if torch.isnan(y).any():
+            print("hej")
         return y
 
 
@@ -120,13 +127,17 @@ class CombinerModel_2(nn.Module):
         return x
 
 
-model = CombinerModel_3(15)
+def from_norm(x, avg, stdev):
+    return x * (stdev+0.000001) + avg
+
+
+model = CombinerModel_3(8)
 loss_fn = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=0.00001)
-epoch_range = 100
+optimizer = optim.Adam(model.parameters(), lr=0.00005)
+epoch_range = 200
 batch_size = 512
 
-_data = pd.read_csv("data/dist-L2-traindata.csv", sep=";")
+_data = pd.read_csv("data/Swedbank_A_dist2_train_zscore_Nordea.csv", sep=";")
 train_dev_split_index = round(0.8*len(_data))
 dev_test_split_index = round(0.9*len(_data))
 train_data = _data.loc[:train_dev_split_index]
@@ -134,12 +145,13 @@ eval_data = _data.loc[train_dev_split_index:dev_test_split_index]
 test_data = _data.loc[dev_test_split_index:]
 
 print(train_data.head())
-x_columns = ["pred70", "pred200", "pred700", "ema30", "macd", "rsi5", "volatility100",
-             "channel_k_min_1200", "channel_k_max_1200", "channel_m_min_1200", "channel_m_max_1200",
-             "channel_k_min_7200", "channel_k_max_7200", "channel_m_min_7200", "channel_m_max_7200"]
+x_columns = ["SwedbankPred70", "SwedbankPred200", "SwedbankPred700", "NordeaPred70","ema30", "macd", "rsi5", "volatility100"]
+                 #"channel_k_min_1800", "channel_k_max_1800", "channel_m_min_1800", "channel_m_max_1800",
+                 #"channel_k_min_7200", "channel_k_max_7200", "channel_m_min_7200", "channel_m_max_7200"]
 
 train_data_x = torch.tensor(train_data[x_columns].values, dtype=torch.float32)
 train_data_y = torch.tensor(train_data[["target"]].values, dtype=torch.float32)
+
 train_data_t = TensorDataset(train_data_x, train_data_y)
 train_data_loader = DataLoader(train_data_t, batch_size=batch_size)
 
@@ -160,31 +172,60 @@ torch.save(model.state_dict(), "layer2_model_dict.pt")
 
 print("Testing model\n------------------------------------------\n")
 
-loss, preds = evaluate_model(test_data_loader, model, loss_fn)
+loss, preds_ = evaluate_model(test_data_loader, model, loss_fn)
 print("\nTest loss: " + str(loss))
 
-preds70 = test_data_x[:, 0]
-preds200 = test_data_x[:, 1]
-preds700 = test_data_x[:, 2]
+test_data_y_ = test_data[["target", "avg", "stdev"]].to_numpy()
 
-ema30 = test_data_x[:, 3]
-macd = test_data_x[:, 4]
-rsi = test_data_x[:, 5]
-volatility = test_data_x[:, 6]
+preds70_ = test_data_x[:, 0]
+preds200_ = test_data_x[:, 1]
+preds700_ = test_data_x[:, 2]
+
+loss_fn_70 = nn.MSELoss()
+loss70 = loss_fn_70(preds70_, test_data_y.flatten()).item()
+print("Pred70 loss: " + str(loss70))
+
+loss_fn_200 = nn.MSELoss()
+loss200 = loss_fn_200(preds200_, test_data_y.flatten()).item()
+print("Pred200 loss: " + str(loss200))
+
+loss_fn_700 = nn.MSELoss()
+loss700 = loss_fn_700(preds700_, test_data_y.flatten()).item()
+print("Pred700 loss: " + str(loss700))
+
+#ema30_ = test_data_x[:, 3]
+#macd_ = test_data_x[:, 4]
+#rsi_ = test_data_x[:, 5]
+#volatility_ = test_data_x[:, 6]
+
+target = []
+preds = []
+preds70 = []
+preds200 = []
+preds700 = []
+for i in range(len(test_data_y_)):
+    (t, avg, stdev) = test_data_y_[i]
+    target.append(from_norm(t, avg, stdev))
+    preds.append(from_norm(preds_[i], avg, stdev))
+    preds70.append(from_norm(preds70_[i], avg, stdev))
+    preds200.append(from_norm(preds200_[i], avg, stdev))
+    preds700.append(from_norm(preds700_[i], avg, stdev))
+
 
 # Plot train predictions
-plt.plot(list(range(len(train_preds))), train_preds, label="Train Predictions")
-plt.plot(list(range(len(train_preds))), train_data_y, label="Train Target")
-axes = plt.gca()
-plt.legend()
-plt.show()
+#plt.plot(list(range(len(train_preds))), train_preds, label="Train Predictions")
+#plt.plot(list(range(len(train_preds))), train_data_y, label="Train Target")
+#axes = plt.gca()
+#plt.legend()
+#plt.show()
 
 # Plot test predictions
 plt.plot(list(range(len(preds))), preds, label="Predictions")
-plt.plot(list(range(len(preds))), test_data_y, label="Target")
+plt.plot(list(range(len(preds))), target, label="Target")
 plt.plot(list(range(len(preds))), preds70, label="Pred70")
 plt.plot(list(range(len(preds))), preds200, label="preds200")
 plt.plot(list(range(len(preds))), preds700, label="preds700")
+plt.ylim(155, 160)
 #plt.plot(list(range(len(preds))), ema30, label="ema30")
 #plt.plot(list(range(len(preds))), macd, label="macd")
 #plt.plot(list(range(len(preds))), rsi, label="rsi")

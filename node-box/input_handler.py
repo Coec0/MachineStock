@@ -48,7 +48,7 @@ class InputHandler:
                 for count, time_start in enumerate(start_times):
                     self.benchmark_stat_tracks.add(current_time - time_start)
                     self.benchmark_waiting_stat_track.add(current_time - self.benchmark_waiting_track[count])
-                if len(self.benchmark_stat_tracks) % (300*self.number_of_features) == 0:
+                if len(self.benchmark_stat_tracks) % (5*self.number_of_features) == 0:
                     longest, shortest, mean, deviation = self.benchmark_stat_tracks.get()
                     print("Longest time: "+str(longest))
                     print("Shortest time: "+str(shortest))

@@ -203,7 +203,7 @@ def create_train_data(params, data):
 params = {
     "stocks": ["Swedbank_A", "Nordea_Bank_Abp"],
     "window_sizes": [1],
-    "use-time": False
+    "use-time": True
 }
 
 datafile = "market_orders_apr.csv"

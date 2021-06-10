@@ -182,50 +182,64 @@ def train(file_x, file_y, model, input_size, window_size, loss_fn, optimizer, fi
     test_data_loader = DataLoader(test_data, batch_size=512)
     loss, preds_, r2 = evaluate_model(test_data_loader, model, loss_fn)
 
+
+
     x_avg = x_avg.tolist()
     target = []
     preds = []
-    test_data_y = test_data_y.to_numpy()
-    for i in range(len(test_data_y)):
-        (t, avg, stdev, _) = test_data_y[i]
+    test_data_y_ = test_data_y.to_numpy()
+    for i in range(len(test_data_y_)):
+        (t, avg, stdev, _) = test_data_y_[i]
         p = preds_[i]
         target.append(from_norm(t, avg, stdev))
         preds.append(from_norm(p, avg, stdev))
         x_avg[i] = from_norm(x_avg[i], avg, stdev)
 
+    target_tensor = torch.tensor(target, dtype=torch.float32)
+
+    preds_tensor = torch.tensor(preds, dtype=torch.float32)
+    loss_fn_mse = nn.MSELoss()
+    loss_fn_mae = nn.L1Loss()
+    mse_loss_preds = loss_fn_mse(preds_tensor, target_tensor)
+    mae_loss_preds = loss_fn_mae(preds_tensor, target_tensor)
+
+    avg_10min = torch.tensor(test_data_y["avg"].values, dtype=torch.float32)
+    loss_fn_mse = nn.MSELoss()
+    loss_fn_mae = nn.L1Loss()
+    mse_loss_10min = loss_fn_mse(avg_10min, target_tensor)
+    mae_loss_10min = loss_fn_mae(avg_10min, target_tensor)
+
+    target_for_offset = torch.tensor(target[:-30], dtype=torch.float32)
+    offset = torch.tensor(target[30:], dtype=torch.float32)
+    loss_fn_mse = nn.MSELoss()
+    loss_fn_mae = nn.L1Loss()
+    mse_loss_offset = loss_fn_mse(offset, target_for_offset)
+    mae_loss_offset = loss_fn_mae(offset, target_for_offset)
+
 
     with io.open(filepath+"log.txt", "a", encoding="utf-8") as f:
-        f.write("\n------\nTest loss: " + str(loss))
-        f.write("\nTest R^2: " + str(r2))
+        f.write("\n------\nNorm Test loss: " + str(loss))
 
-    plt.plot(list(range(159000, 160000)), preds[159000:160000], label="Predictions")
-    plt.plot(list(range(159000, 160000)), target[159000:160000], label="Target")
-    axes = plt.gca()
-    plt.legend()
-    plt.savefig(filepath+'zoom.pdf')
-    plt.close()
 
-    plt.plot(list(range(100000,120000)), preds[100000:120000], label="Predictions")
-    plt.plot(list(range(100000,120000)), target[100000:120000], label="Target")
-    plt.plot(list(range(100000,120000)), x_avg[100000:120000], label="Avg price")
+    ##plt.plot(list(range(159000, 160000)), preds[159000:160000], label="Predictions")
+    #plt.plot(list(range(159000, 160000)), target[159000:160000], label="Target")
+    #axes = plt.gca()
+    #plt.legend()
+    #plt.show()
+    #plt.savefig(filepath+'zoom.pdf')
+    #plt.close()
+
+    plt.plot(list(range(len(preds))), preds, label="Predictions")
+    plt.plot(list(range(len(preds))), target, label="Target")
+    plt.plot(list(range(len(preds))), x_avg, label="Avg price")
     axes = plt.gca()
     plt.legend()
     #axes.set_xlim([100000,120000])
+    plt.show()
     plt.savefig(filepath+'avg.pdf')
     plt.close()
 
-    plt.plot(list(range(len(preds))), preds, label="Predictions")
-    plt.plot(list(range(len(target))), target, label="Target")
-    axes = plt.gca()
-    plt.legend()
-    plt.savefig(filepath+'whole.pdf')
-    plt.close()
-
-    #avg_train_loss = sum(last_epoch_train_loss)/len(last_epoch_train_loss)
-    #avg_val_loss = sum(last_epoch_val_loss)/len(last_epoch_val_loss)
-    #avg_val_r2 = sum(last_epoch_r2)/len(last_epoch_r2)
     avg_train_loss = last_epoch_train_loss[-1]
     avg_val_loss = last_epoch_val_loss[-1]
-    avg_val_r2 = last_epoch_r2[-1]
 
-    return avg_train_loss, avg_val_loss, loss, avg_val_r2, r2
+    return avg_train_loss, avg_val_loss, loss, mse_loss_preds, mae_loss_preds, mse_loss_10min, mae_loss_10min, mse_loss_offset, mae_loss_offset
